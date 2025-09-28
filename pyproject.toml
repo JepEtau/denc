@@ -1,0 +1,57 @@
+[build-system]
+requires = ["setuptools >= 77.0.3", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "denc"
+version = "0.1"
+authors = [
+    {name = "Jep Etau", email = "jep.etau@gmail.com"},
+]
+description = "A Python wrapper for FFmpeg with frame-level control and real-time streaming"
+readme = "README.md"
+requires-python = ">= 3.12"
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3.12",
+]
+keywords = ["ffmpeg", "video", "audio", "media-processing"]
+dependencies = [
+    "numpy>=2.2.6",
+    "opencv-python>=4.12",
+    # FFmpeg is expected to be installed
+]
+
+# [project.optional-dependencies]
+# dev = [
+#     "pytest>=6.0",
+#     "black",
+#     "flake8",
+#     "mypy",
+# ]
+# docs = [
+#     "sphinx",
+#     "sphinx-rtd-theme",
+# ]
+
+[project.urls]
+Homepage = "https://github.com/JepEtau/denc"
+Documentation = "https://github.com/JepEtau/denc/README.md"
+Repository = "https://github.com/JepEtau/denc"
+"Bug Tracker" = "https://github.com/JepEtau/denc/issues"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["denc*"]
+exclude = ["tests*"]
+
+[tool.black]
+line-length = 90
+target-version = ['py312']
+
+[tool.mypy]
+python_version = "3.12"
+warn_return_any = true
+warn_unused_configs = true

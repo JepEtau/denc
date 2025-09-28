@@ -1,0 +1,272 @@
+from __future__ import annotations
+from dataclasses import dataclass, field
+from enum import Enum
+from fractions import Fraction
+import math
+import numpy as np
+import os
+import torch
+from typing import Any, Literal, Optional, TYPE_CHECKING
+from warnings import warn
+
+from .path_utils import path_split
+from .torch_tensor import np_dtype_to_torch
+from .p_print import *
+from .time_conversions import FrameRate
+
+
+from .colorpspace import (
+    ColorRange,
+    ColorSpace,
+)
+
+from .vcodec import (
+    PixFmt,
+    VideoCodec,
+    vcodec_to_extension,
+    codec_profile,
+)
+if TYPE_CHECKING:
+    from .media_stream import MediaStream
+
+
+ChannelOrder = Literal['rgb', 'bgr']
+FShape = tuple[int, int, int]
+
+class FieldOrder(Enum):
+    PROGRESSIVE = 'progressive' # Progressive video
+    TOP_FIELD_FIRST = 'tt'      # Interlaced video, top field coded and displayed first
+    BOTTOM_FIELD_FIRST = 'bb'   # Interlaced video, bottom field coded and displayed first
+    TOP_FIELD_BOTTOM = 'tb'     # Interlaced video, top coded first, bottom displayed first
+    BOTTOM_FIELD_TOP = 'bt'     # Interlaced video, bottom coded first, top displayed first
+
+
+
+
+
+@dataclass(slots=True)
+class PipeFormat:
+    dtype: torch.dtype
+    pix_fmt: Literal['rgb24', 'rgb48']
+    shape: FShape
+    nbytes: int
+
+
+
+@dataclass(slots=True)
+class Device:
+    name: str = 'cpu'
+    dtype: torch.dtype = torch.float32
+
+
+
+@dataclass(slots=True)
+class DecoderResize:
+    enabled: bool = False
+    use_sar: bool = True
+    algorithm: Literal['lanczos', 'bicubic'] = 'bicubic'
+    side: Literal['width', 'height'] = 'width'
+
+
+
+@dataclass
+class VideoStream:
+    filepath: str
+    codec: VideoCodec
+
+    shape: FShape
+    dtype: np.dtype
+    bpp: int
+
+    c_order: ChannelOrder
+
+    frame_rate_r: FrameRate
+    frame_rate_avg: FrameRate
+    frame_count: int
+    duration: float
+
+    pix_fmt: PixFmt
+
+    is_frame_rate_fixed: bool = False
+
+    sar: Fraction = Fraction(1, 1)
+    dar: Fraction = Fraction(1, 1)
+
+    is_interlaced: bool = False
+    field_order: FieldOrder = FieldOrder.PROGRESSIVE
+    color_range: ColorRange = None
+    color_space: ColorSpace = None
+    color_matrix: ColorSpace = None
+    color_primaries: ColorSpace = None
+    color_transfer: ColorRange = None
+
+    metadata: Any = None
+
+    # temporarly: use a flag to indicate if input/output
+    is_input: bool = False
+
+    resize: DecoderResize = field(default_factory=DecoderResize)
+    device: Device = field(default_factory=Device)
+
+    def __post_init__(self):
+        pipe_dtype = torch.uint16 if self.bpp > 8 else torch.uint8
+        shape = self._calculate_pipe_shape()
+        self._pipe_format = PipeFormat(
+            dtype=pipe_dtype,
+            pix_fmt='rgb24' if pipe_dtype == torch.uint8 else 'rgb48',
+            shape=shape,
+            nbytes=math.prod(shape) * torch.tensor([], dtype=pipe_dtype).element_size(),
+            # device='cpu'
+        )
+        self._vcodec = self.codec
+
+
+    def _calculate_pipe_shape(self) -> FShape:
+        h, w, c = self.shape
+        if self.resize.use_sar:
+            if self.resize.side == 'width':
+                w = int(w * self.sar.numerator / self.sar.denominator)
+            else:
+                h = int(h * self.sar.denominator / self.sar.numerator)
+        if self.resize.enabled:
+            raise ValueError(red("not yet implemented"))
+        return (h, w, c)
+
+
+    @property
+    def pipe_format(self) -> PipeFormat:
+        return self._pipe_format
+
+
+    def set_pipe_format(self, dtype: torch.dtype | np.dtype) -> None:
+        """Video pipe
+        """
+        dtype: torch.dtype = np_dtype_to_torch.get(dtype, dtype)
+        self._pipe_format.dtype = dtype
+        self._pipe_format.pix_fmt = 'rgb24' if dtype == torch.uint8 else 'rgb48'
+        self._pipe_format.shape = self._calculate_pipe_shape()
+        self._pipe_format.nbytes = (
+            math.prod(self._pipe_format.shape) * torch.tensor([], dtype=dtype).element_size()
+        )
+
+
+    def set_device(
+        self,
+        device: str,
+        dtype: torch.dtype = torch.float32
+    ) -> None:
+        if device == "cpu":
+            dtype = torch.float32
+        self.device = Device(name=device, dtype=dtype)
+
+
+
+# presets
+class FFmpegPreset(Enum):
+    DEFAULT = "medium"
+    ULTRAFAST = "ultrafast"
+    SUPERFAST = "superfast"
+    VERYFAST = "veryfast"
+    FASTER = "faster"
+    FAST = "fast"
+    MEDIUM = "medium"
+    SLOW = "slow"
+    SLOWER = "slower"
+    VERYSLOW = "veryslow"
+    PLACEBO = "placebo"
+_preset_keys = [preset.name for preset in FFmpegPreset]
+
+
+
+@dataclass
+class OutVideoStream(VideoStream):
+    parent: Optional[MediaStream] = field(default=None, repr=False, compare=False)
+    _extra_params: list[str] = field(default_factory=list)
+    _preset: FFmpegPreset = FFmpegPreset.DEFAULT
+    _crf: int = -1
+    _profile: str = ""
+
+    def __post_init__(self):
+        super().__post_init__()
+        self._codec: VideoCodec = self.codec
+        self.set_pipe_format(dtype=self.dtype)
+
+    @property
+    def codec(self) -> VideoCodec:
+        return self._codec
+
+
+    @codec.setter
+    def codec(self, codec: VideoCodec) -> None:
+        self._codec = codec
+        if self.filepath:
+            directory, basename, _ = path_split(self.filepath)
+            self.filepath = os.path.join(
+                directory, f"{basename}{vcodec_to_extension[codec]}"
+            )
+            if self.parent is not None:
+                self.parent.filepath = self.filepath
+
+
+    @property
+    def extra_params(self) -> list[str]:
+        return self._extra_params
+
+
+    @extra_params.setter
+    def extra_params(self, params: str | list[str]) -> None:
+        if isinstance(params, str):
+            self._extra_params = [x for x in params.split(" ") if x]
+        elif isinstance(params, list | tuple):
+            self._extra_params = [x for x in params if x]
+        else:
+            raise TypeError(f"Wrong type: {type(params)}")
+
+
+    @property
+    def preset(self) -> FFmpegPreset:
+        return self._preset
+
+
+    @preset.setter
+    def preset(self, preset: FFmpegPreset) -> None:
+        if preset.name in _preset_keys:
+            self._preset = preset
+
+
+    @property
+    def crf(self) -> int:
+        # libx264	    0–51	(23)
+        # libx265	    0–51	(28)
+        # libvpx-vp9	0–63	(31)
+        if self.codec == VideoCodec.VP9:
+            return max(-1, min(self._crf, 63))
+        return max(-1, min(self._crf, 51))
+
+
+    @crf.setter
+    def crf(self, crf: int) -> None:
+        self._crf = max(0, min(crf, 63))
+
+
+    @property
+    def profile(self) -> str:
+        if self._profile:
+            if self._profile in codec_profile[self._vcodec]['available']:
+                return self._profile
+            else:
+                warn(f"\'{self._profile}\' is not a valid profile for {self._vcodec}, available: {codec_profile[self._vcodec]['available']}")
+                return ""
+        else:
+            if (
+                not self._profile and codec_profile[self._vcodec]['default']
+            ):
+                return codec_profile[self._vcodec]['default']
+        return self._profile
+
+
+    @profile.setter
+    def profile(self, profile: str) -> None:
+        if not profile in codec_profile[self._vcodec]['available']:
+            warn(f"\'{self._profile}\' is not a valid profile for {self._vcodec}, available: {codec_profile[self._vcodec]['available']}")
+        self._profile = profile

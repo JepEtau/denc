@@ -1,0 +1,30 @@
+{
+    "files.exclude": {
+        "**/__pycache__": true,
+        "**/*.engine": true,
+        "**/*.mkv": true,
+        "**/*.mp4": true,
+        "**/*.mxf": true,
+        "**/*.mov": true,
+        "**/*.onnx": true,
+        "**/*.png": true,
+        "**/*.ui": false,
+        "**/resources": true,
+        "**/*.so": true,
+        "**/*.exe": true,
+        "*.json": true,
+        "**/external": true,
+        "**/~$$*": true,
+    },
+    "files.insertFinalNewline": true,
+    "files.trimFinalNewlines": false,
+    "files.trimTrailingWhitespace": true,
+
+    "[python]": {
+        "editor.rulers": [
+            90,
+            120
+        ]
+    },
+
+}
