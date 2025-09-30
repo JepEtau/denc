@@ -17,7 +17,7 @@ class ColorSpace(Enum):
     BT2020C = "bt2020c"
 
 
-class ColorRange(Enum):
+class ColorRange(str, Enum):
     LIMITED = "limited"
     FULL = "full"
 

@@ -2,19 +2,18 @@
     "files.exclude": {
         "**/__pycache__": true,
         "**/*.engine": true,
+        "**/*.exe": true,
         "**/*.mkv": true,
+        "**/*.mov": true,
         "**/*.mp4": true,
         "**/*.mxf": true,
-        "**/*.mov": true,
         "**/*.onnx": true,
         "**/*.png": true,
-        "**/*.ui": false,
-        "**/resources": true,
         "**/*.so": true,
-        "**/*.exe": true,
-        "*.json": true,
-        "**/external": true,
+        "**/*.ui": false,
         "**/~$$*": true,
+        "**/external": true,
+        "**/resources": true
     },
     "files.insertFinalNewline": true,
     "files.trimFinalNewlines": false,
@@ -27,4 +26,10 @@
         ]
     },
 
+    "python.analysis.typeCheckingMode": "basic",
+    "python.analysis.diagnosticSeverityOverrides": {
+        "reportAssignmentType": "none",
+        "reportArgumentType": "none",
+        "reportOptionalMemberAccess": "none",
+    }
 }

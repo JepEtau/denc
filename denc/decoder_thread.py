@@ -57,7 +57,7 @@ class DecoderThread(BaseThread):
         nbytes: int = pipe.nbytes
 
         # Create a cuda stream and allocate Host memory
-        cuda = bool("cuda" in vstream.device)
+        cuda = bool("cuda" in vstream.device.name)
         if cuda:
             cuda_stream: torch.cuda.Stream = torch.cuda.Stream(vstream.device)
             stream_context: StreamContext = torch.cuda.stream(cuda_stream)

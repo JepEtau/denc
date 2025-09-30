@@ -1,21 +1,21 @@
 from __future__ import annotations
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 import json
 import subprocess
-from typing import TypedDict
 
+from .encoder import write
 from .seek import Seek
 from .tools import ffprobe_exe
 from .vstream import OutVideoStream, VideoStream
 
 
-
-class AudioInfo(TypedDict):
+@dataclass
+class AudioInfo:
     nstreams: int = 0
 
 
-
-class SubtitleInfo(TypedDict):
+@dataclass
+class SubtitleInfo:
     nstreams: int = 0
 
 
@@ -26,7 +26,7 @@ class MediaStream:
     video: VideoStream | OutVideoStream
     audio: AudioInfo | None = None
     subtitles: SubtitleInfo | None = None
-    seek: Seek = None
+    seek: Seek = field(init=False)
 
 
     def __post_init__(self):
@@ -50,8 +50,10 @@ class MediaStream:
         if _is_set(end):
             self.seek.to = end
 
+
     def write(self, frames):
-        return save_as_video(self, frames)
+        return write(self, frames)
+
 
 
 def probe_media_file(media_filepath: str):

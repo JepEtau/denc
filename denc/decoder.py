@@ -16,7 +16,7 @@ from .p_print import *
 from .tools import ffmpeg_exe
 from .torch_tensor import (
     torch_dtype_to_np,
-    np_dtype_to_torch,
+    np_to_torch_dtype,
 )
 from .vstream import (
     PipeFormat,
@@ -39,7 +39,7 @@ if not _is_pynnlib_available:
     from .torch_tensor import (
         Idtype,
         IdtypeToTorch,
-        np_dtype_to_torch,
+        np_to_torch_dtype,
         img_to_tensor,
     )
 else:
@@ -47,16 +47,16 @@ else:
     _pynnlib = importlib.import_module("pynnlib")
     Idtype = _pynnlib.Idtype
     IdtypeToTorch = _pynnlib.IdtypeToTorch
-    np_dtype_to_torch = _pynnlib.np_dtype_to_torch
+    np_to_torch_dtype = _pynnlib.np_to_torch_dtype
 
 if TYPE_CHECKING:
     from .torch_tensor import (
         Idtype,
         IdtypeToTorch,
-        np_dtype_to_torch,
+        np_to_torch_dtype,
         img_to_tensor,
     )
-from utils.dh_transfers import htod_transfer
+from .dh_transfers import htod_transfer
 
 
 
@@ -167,7 +167,7 @@ def _decode_frames_as_cuda_tensors(
             cuda_stream,
             tensors: list[Tensor],
         ):
-            img_dtype: torch.dtype = np_dtype_to_torch.get(pipe.dtype, pipe.dtype)
+            img_dtype: torch.dtype = np_to_torch_dtype(pipe.dtype)
             while True:
                 img_buffer: Tensor = queue.get()
                 if img_buffer is None:
@@ -207,7 +207,7 @@ def _decode_frames_as_cuda_tensors(
             _thread.join()
 
         else:
-            img_dtype: torch.dtype = np_dtype_to_torch.get(pipe.dtype, pipe.dtype)
+            img_dtype: torch.dtype = np_to_torch_dtype(pipe.dtype)
             for i in range(frame_count):
                 frame_buffer: Tensor = torch.frombuffer(
                     d_subprocess.stdout.read(nbytes), dtype=torch.uint8,
@@ -271,7 +271,7 @@ def decode_frames(
     in_frames: list[np.ndarray] = []
 
     if not as_tensor:
-        dtype: np.dtype = torch_dtype_to_np[pipe.dtype]
+        dtype: np.dtype = torch_dtype_to_np(pipe.dtype)
         if threaded:
             def _np_to_float32_thread(
                 queue: Queue,
@@ -325,13 +325,14 @@ def decode_frames(
                 tensor_dtype: torch.dtype,
                 frames: list[np.ndarray],
             ):
+                np_dtype: np.dtype = torch_dtype_to_np(pipe.dtype)
                 while True:
                     frame_buffer: np.ndarray = queue.get()
                     if frame_buffer is None:
                         break
                     frames.append(
                         img_to_tensor(
-                            d_img=frame_buffer.view(dtype=pipe.dtype).reshape(pipe.shape),
+                            d_img=frame_buffer.view(dtype=np_dtype).reshape(pipe.shape),
                             tensor_dtype=tensor_dtype
                         )
                     )

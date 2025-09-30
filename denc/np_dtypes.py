@@ -27,7 +27,6 @@ def np_to_float16(img: np.ndarray) -> np.ndarray:
 
 
 
-
 def np_to_uint16(img: np.ndarray) -> np.ndarray:
     """Convert a np array from float to uint16
         without normalizing it

@@ -30,7 +30,7 @@ from .path_utils import path_split
 from .p_print import red
 from .tools import ffmpeg_exe
 from .torch_tensor import (
-    np_dtype_to_torch,
+    np_to_torch_dtype,
     tensor_to_img,
 )
 
@@ -202,7 +202,7 @@ from .torch_tensor import (
 
 def encoder_subprocess(
     vstream: OutVideoStream,
-) -> subprocess.Popen:
+) -> subprocess.Popen | None:
 
     pipe: PipeFormat = vstream.pipe_format
     pipe_bpp = PIXEL_FORMAT[vstream.pix_fmt.value]['pipe_bpp']
@@ -235,13 +235,13 @@ def encoder_subprocess(
 
     # colorspace, color range
     colorspace: list[str] = []
+    v: str | None
     k, v = 'color_range', vstream.color_range
-    v: str
     if (
         k not in codec_params
         and v is not None and v.lower() not in ("unknown", "unspecified")
     ):
-        limited: tuple[str] = ("tv", "mpeg", "limited")
+        limited: tuple[str, ...] = ("tv", "mpeg", "limited")
         # full: tuple[str] = ("pc", "jpeg", "full")
         colorspace.extend([f"-{k}", "limited" if v.lower() in limited else "full"])
 
@@ -281,7 +281,7 @@ def encoder_subprocess(
     os.makedirs(path_split(vstream.filepath)[0], exist_ok=True)
     print(purple(f"[V] Encoder: "), " ".join(e_command))
 
-    e_subprocess: subprocess.Popen = None
+    e_subprocess: subprocess.Popen | None = None
     try:
         e_subprocess = subprocess.Popen(
             e_command,
@@ -291,7 +291,7 @@ def encoder_subprocess(
         )
     except Exception as e:
         print(red(f"[E][W]Unexpected error: {type(e)}"))
-        return False
+        return None
 
     return e_subprocess
 
@@ -302,7 +302,7 @@ def _encode_cuda_tensors(
     frames: list[Tensor],
     device: str = "cuda:0",
 ) -> None:
-    e_subprocess = encoder_subprocess(vstream=media.video)
+    e_subprocess: subprocess.Popen = encoder_subprocess(vstream=media.video)
 
     # Output stream
     pipe: PipeFormat = media.video.pipe_format
@@ -313,7 +313,7 @@ def _encode_cuda_tensors(
     stream_context: StreamContext = torch.cuda.stream(cuda_stream)
     host_mem: Tensor = torch.empty(
         pipe.shape,
-        dtype=np_dtype_to_torch[img_dtype],
+        dtype=np_to_torch_dtype(img_dtype),
         pin_memory=True
     )
 

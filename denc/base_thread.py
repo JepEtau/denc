@@ -26,6 +26,7 @@ class BaseThread(abc.ABC, Thread):
         group: None = None,
         target: Callable[..., object] | None = None,
         name: str | None = None,
+        verbose: bool = False,
         args: Iterable[Any] = ...,
         kwargs: Mapping[str, Any] | None = None,
         *,
@@ -34,7 +35,7 @@ class BaseThread(abc.ABC, Thread):
         super().__init__(group, target, name, args, kwargs, daemon=daemon)
         self._has_error: bool = False
         self._error_msg: str = ''
-        self._verbose: bool = False
+        self._verbose: bool = verbose
 
         self.producer: Type[BaseThread] | None = None
         self.consumer: Type[BaseThread] | None = None
@@ -75,7 +76,7 @@ class BaseThread(abc.ABC, Thread):
 
 
     def put_tensor(self, frame: np.ndarray | torch.Tensor) -> bool:
-        pass
+        return False
 
 
     def put(self, data: Any, force: bool=False) -> None:

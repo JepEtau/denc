@@ -2,7 +2,7 @@ import sys
 import numpy as np
 import torch
 from torch import Tensor
-from typing import Literal, TypeAlias
+from typing import Any, Literal, TypeAlias, cast
 
 
 Idtype: TypeAlias = Literal['fp32', 'fp16', 'bf16']
@@ -10,7 +10,7 @@ Idtype: TypeAlias = Literal['fp32', 'fp16', 'bf16']
 
 # https://github.com/pytorch/pytorch/blob/main/torch/testing/_internal/common_utils.py
 # Dict of NumPy dtype -> torch dtype (when the correspondence exists)
-np_dtype_to_torch = {
+_np_dtype_to_torch: dict[type[np.generic] | np.dtype | Any, torch.dtype] = {
     np.bool_      : torch.bool,
     np.uint8      : torch.uint8,
     np.uint16     : torch.uint16,
@@ -31,6 +31,7 @@ np_dtype_to_torch = {
     np.dtype('uint16'): torch.uint16,
 }
 
+
 _torch_max_value: dict[torch.dtype, float] = {
     torch.uint8: 255.,
     torch.uint16: 65535.,
@@ -39,22 +40,31 @@ _torch_max_value: dict[torch.dtype, float] = {
     torch.float32: 1.,
 }
 
+
 if sys.platform == "win32":
     # Size of `np.intc` is platform defined.
     # It is returned by functions like `bitwise_not`.
     # On Windows `int` is 32-bit
     # https://docs.microsoft.com/en-us/cpp/cpp/data-type-ranges?view=msvc-160
-    np_dtype_to_torch[np.intc] = torch.int
+    _np_dtype_to_torch[np.intc] = torch.int
 
-# Dict of torch dtype -> NumPy dtype
-torch_dtype_to_np: dict[torch.dtype, np.dtype] = {
+
+def np_to_torch_dtype(dtype: torch.dtype | np.dtype) -> torch.dtype:
+    return cast(torch.dtype, _np_dtype_to_torch.get(dtype, dtype))
+
+
+_torch_dtype_to_np: dict[torch.dtype, type[np.generic] | np.dtype] = {
     value: key
-    for (key, value) in np_dtype_to_torch.items()
+    for (key, value) in _np_dtype_to_torch.items()
 }
-# np_to_torch_dtype_dict.update({
+# _torch_dtype_to_np.update({
 #     torch.bfloat16: np.float32,
 #     torch.complex32: np.complex64
 # })
+
+
+def torch_dtype_to_np(dtype: torch.dtype) ->  np.dtype:
+    return cast(np.dtype, _torch_dtype_to_np[dtype])
 
 
 IdtypeToTorch: dict[Idtype, torch.dtype] = {

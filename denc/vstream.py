@@ -10,7 +10,7 @@ from typing import Any, Literal, Optional, TYPE_CHECKING
 from warnings import warn
 
 from .path_utils import path_split
-from .torch_tensor import np_dtype_to_torch
+from .torch_tensor import np_to_torch_dtype
 from .p_print import *
 from .time_conversions import FrameRate
 
@@ -39,8 +39,6 @@ class FieldOrder(Enum):
     BOTTOM_FIELD_FIRST = 'bb'   # Interlaced video, bottom field coded and displayed first
     TOP_FIELD_BOTTOM = 'tb'     # Interlaced video, top coded first, bottom displayed first
     BOTTOM_FIELD_TOP = 'bt'     # Interlaced video, bottom coded first, top displayed first
-
-
 
 
 
@@ -94,11 +92,11 @@ class VideoStream:
 
     is_interlaced: bool = False
     field_order: FieldOrder = FieldOrder.PROGRESSIVE
-    color_range: ColorRange = None
-    color_space: ColorSpace = None
-    color_matrix: ColorSpace = None
-    color_primaries: ColorSpace = None
-    color_transfer: ColorRange = None
+    color_range: Optional[ColorRange] = None
+    color_space: Optional[ColorSpace] = None
+    color_matrix: Optional[ColorSpace] = None
+    color_primaries: Optional[ColorSpace] = None
+    color_transfer: Optional[ColorRange] = None
 
     metadata: Any = None
 
@@ -107,6 +105,9 @@ class VideoStream:
 
     resize: DecoderResize = field(default_factory=DecoderResize)
     device: Device = field(default_factory=Device)
+
+    parent: Optional[MediaStream] = field(default=None, repr=False, compare=False)
+
 
     def __post_init__(self):
         pipe_dtype = torch.uint16 if self.bpp > 8 else torch.uint8
@@ -141,12 +142,12 @@ class VideoStream:
     def set_pipe_format(self, dtype: torch.dtype | np.dtype) -> None:
         """Video pipe
         """
-        dtype: torch.dtype = np_dtype_to_torch.get(dtype, dtype)
-        self._pipe_format.dtype = dtype
-        self._pipe_format.pix_fmt = 'rgb24' if dtype == torch.uint8 else 'rgb48'
+        torch_dtype: torch.dtype = np_to_torch_dtype(dtype)
+        self._pipe_format.dtype = torch_dtype
+        self._pipe_format.pix_fmt = 'rgb24' if torch_dtype == torch.uint8 else 'rgb48'
         self._pipe_format.shape = self._calculate_pipe_shape()
         self._pipe_format.nbytes = (
-            math.prod(self._pipe_format.shape) * torch.tensor([], dtype=dtype).element_size()
+            math.prod(self._pipe_format.shape) * torch.tensor([], dtype=torch_dtype).element_size()
         )
 
 
