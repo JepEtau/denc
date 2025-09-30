@@ -3,7 +3,7 @@ import abc
 from collections.abc import Callable
 from dataclasses import dataclass
 from threading import Thread
-from typing import Any, Iterable, Mapping, Type
+from typing import Any, Iterable, Mapping, Optional, Type
 import numpy as np
 import torch
 from torch import Tensor
@@ -37,8 +37,8 @@ class BaseThread(abc.ABC, Thread):
         self._error_msg: str = ''
         self._verbose: bool = verbose
 
-        self.producer: Type[BaseThread] | None = None
-        self.consumer: Type[BaseThread] | None = None
+        self.producer: Optional[BaseThread] = None
+        self.consumer: Optional[BaseThread] = None
         self._processing: bool = True
         self._is_cuda_workflow: bool = False
 
@@ -87,8 +87,8 @@ class BaseThread(abc.ABC, Thread):
         pass
 
 
-    def set_progress_thread(self, progress_thread: ProgressThread) -> None:
-        self.progress_thread = progress_thread
+    # def set_progress_thread(self, progress_thread: ProgressThread) -> None:
+    #     self.progress_thread = progress_thread
 
 
     def processing(self) -> bool:

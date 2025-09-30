@@ -9,10 +9,10 @@ import torch
 from typing import Any, Literal, Optional, TYPE_CHECKING
 from warnings import warn
 
-from .path_utils import path_split
+from .utils.path_utils import path_split
 from .torch_tensor import np_to_torch_dtype
-from .p_print import *
-from .time_conversions import FrameRate
+from .utils.p_print import *
+from .utils.time_conversions import FrameRate
 
 
 from .colorpspace import (

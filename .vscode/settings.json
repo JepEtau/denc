@@ -31,5 +31,6 @@
         "reportAssignmentType": "none",
         "reportArgumentType": "none",
         "reportOptionalMemberAccess": "none",
+        // "reportCallIssue": "none",
     }
 }

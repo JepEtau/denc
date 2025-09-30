@@ -14,7 +14,7 @@ from .media_stream import MediaStream
 from .vstream import FShape, PipeFormat, VideoStream
 
 from .dh_transfers import dtoh_transfer
-from .p_print import *
+from .utils.p_print import *
 from .torch_tensor import tensor_to_img
 
 

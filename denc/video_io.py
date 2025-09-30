@@ -11,10 +11,10 @@ from .media_stream import (
     VideoStream,
     probe_media_file,
 )
-from .p_print import *
-from .path_utils import absolute_path
+from .utils.p_print import *
+from .utils.path_utils import absolute_path
 from .pxl_fmt import PIXEL_FORMAT, PixFmt
-from .time_conversions import FrameRate
+from .utils.time_conversions import FrameRate
 from .vcodec import VideoCodec
 from .vstream import FieldOrder, OutVideoStream
 
@@ -31,7 +31,7 @@ def open(filepath: str, verbose: bool = False) -> MediaStream:
     duration_s = float(media_info['format']['duration'])
 
     # Use the first video track
-    v_stream: dict = [
+    v_stream: dict[str, str] = [
         stream for stream in media_info['streams'] if stream['codec_type'] == 'video'
     ][0]
     audio_info: AudioInfo = AudioInfo(
@@ -73,8 +73,8 @@ def open(filepath: str, verbose: bool = False) -> MediaStream:
 
         field_order=field_order,
 
-        frame_rate_r=Fraction(v_stream.get('r_frame_rate')),
-        frame_rate_avg=Fraction(v_stream.get('avg_frame_rate')),
+        frame_rate_r=Fraction(v_stream.get('r_frame_rate', '0')),
+        frame_rate_avg=Fraction(v_stream.get('avg_frame_rate', '0')),
 
         codec=v_stream['codec_name'],
         pix_fmt=pix_fmt,
@@ -107,7 +107,7 @@ def open(filepath: str, verbose: bool = False) -> MediaStream:
         for tag_name in list(video_info.metadata.keys()).copy():
             if tag_name.lower() in tags_to_discard:
                 try:
-                    del video_info['metadata'][tag_name]
+                    del video_info.metadata[tag_name]
                 except:
                     pass
 
@@ -134,11 +134,11 @@ def open(filepath: str, verbose: bool = False) -> MediaStream:
             for tag_name in list(tags.keys()).copy():
                 if tag_name.lower() in tags_to_discard:
                     try:
-                        del video_info['metadata'][tag_name]
+                        del video_info.metadata[tag_name]
                     except:
                         pass
                     continue
-                video_info['metadata'][tag_name] = tags[tag_name]
+                video_info.metadata[tag_name] = tags[tag_name]
 
     # Is interlaced?
     if fo := v_stream.get('field_order', None):
@@ -159,12 +159,12 @@ def open(filepath: str, verbose: bool = False) -> MediaStream:
 
     tags = v_stream.get('tags', None)
     if tags is not None:
-        tag_frame_count = tags.get('NUMBER_OF_FRAMES', None)
+        tag_frame_count = tags.get('NUMBER_OF_FRAMES', '')
         if tag_frame_count is not None:
-            tag_frame_count = int(tag_frame_count)
+            tag_frame_count: int = int(tag_frame_count)
             if video_info.frame_count != tag_frame_count:
                 video_info.frame_count = tag_frame_count
-                video_info.frame_rate_r = tag_frame_count / video_info.duration
+                video_info.frame_rate_r = Fraction(tag_frame_count, video_info.duration)
                 video_info.frame_rate_avg = video_info.frame_rate_r
 
     return MediaStream(

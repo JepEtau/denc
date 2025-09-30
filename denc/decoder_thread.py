@@ -9,7 +9,7 @@ from .base_thread import BaseThread, NnFrame
 from .decoder import decoder_subprocess
 from .dh_transfers import htod_transfer
 from .media_stream import MediaStream
-from .p_print import *
+from .utils.p_print import *
 from .torch_tensor import img_to_tensor
 from .vstream import (
     FShape,

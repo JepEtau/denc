@@ -4,13 +4,13 @@ from .vstream import FFmpegPreset
 from .pxl_fmt import PixFmt
 from .colorpspace import ColorRange, ColorSpace
 
-from .io import (
+from .video_io import (
     open,
     new,
 )
 from .decoder import decode_frames
 from .encoder import write
-from .img_io import (
+from .img.io import (
     img_info,
     load_image,
     load_image_fp32,

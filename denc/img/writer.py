@@ -8,11 +8,11 @@ import torch
 from torch import Tensor
 from torch.cuda import StreamContext
 
-from .img_io import write_image
-from .p_print import *
-from .path_utils import path_split
-from .torch_tensor import tensor_to_img
-from .dh_transfers import dtoh_transfer
+from .io import write_image
+from ..utils.p_print import *
+from ..utils.path_utils import path_split
+from ..torch_tensor import tensor_to_img
+from ..dh_transfers import dtoh_transfer
 
 
 

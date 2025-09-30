@@ -4,13 +4,13 @@ from dataclasses import dataclass
 import re
 from typing import TYPE_CHECKING, Optional, cast
 
-from .p_print import *
+from .utils.p_print import *
 
 
 if TYPE_CHECKING:
     from .vstream import VideoStream
 
-from .time_conversions import (
+from .utils.time_conversions import (
     FrameRate,
     frame_to_sexagesimal,
     sexagesimal_to_frame,
@@ -26,7 +26,7 @@ class Seek:
     _to: Optional[int] = -1
 
     @property
-    def start(self) -> int:       
+    def start(self) -> int:
         if self._start is None or self._start < 0:
             if (
                 self._to is not None and self._to > 0
@@ -48,7 +48,7 @@ class Seek:
     def start(self, value: int | str) -> None:
         _start: int = 0
         if isinstance(value, int):
-            _start = value        
+            _start = value
         elif isinstance(value, str) and value:
             # Convert from str to frame no.
             if result := re.search(re.compile(r"^(\d+)f$"), value):
@@ -57,12 +57,12 @@ class Seek:
                 _start = sexagesimal_to_frame(value, self.vstream.frame_rate_r)
         else:
             raise ValueError(f"Invalid start value: {value!r}")
-        
+
         if _start >= self.vstream.frame_count:
             raise ValueError(
                 red(f"Erroneous start value: {self.start} > {self.vstream.frame_count}")
             )
-        
+
         self._start = _start
 
 
@@ -105,7 +105,7 @@ class Seek:
     def to(self) -> int:
         _start: int = 0 if self._start is None or self._start < 0 else self._start
         _count: int = 0 if self._count is None or self._count < 0 else self._count
-        _to: int = 0 if self._to is None  or self._to < 0 else self._to        
+        _to: int = 0 if self._to is None  or self._to < 0 else self._to
         if _to <= _start or _to > _start + _count:
             raise ValueError(red(f"Erroneous end value: {_to} < {_start}"))
         return _to
@@ -135,7 +135,7 @@ class Seek:
             raise ValueError(red(f"Erroneous end value: {value} < {self._start}"))
         self._to = _value
 
-        _to: int = 0 if self._to is None or self._to < 0 else self._to        
+        _to: int = 0 if self._to is None or self._to < 0 else self._to
         if _start > 0:
             self._count = _to - _start
         else:
@@ -197,7 +197,7 @@ class Seek:
             if result := re.search(re.compile(r"^(\d+)f$"), duration):
                 count = int(result.group(1))
             else:
-                count = sexagesimal_to_frame(duration, frame_rate)           
+                count = sexagesimal_to_frame(duration, frame_rate)
         count = min(count, vstream.frame_count)
 
         # End

@@ -9,15 +9,15 @@ import numpy as np
 import torch
 from torch import Tensor
 
-from .np_dtypes import (
+from ..utils.np_dtypes import (
     np_to_float32,
     np_to_uint8,
 )
-from .torch_tensor import (
+from ..torch_tensor import (
     img_to_tensor,
     tensor_to_img,
 )
-from .path_utils import absolute_path, path_split
+from ..utils.path_utils import absolute_path, path_split
 
 
 CPU_COUNT: int = multiprocessing.cpu_count()

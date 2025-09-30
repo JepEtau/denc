@@ -24,10 +24,10 @@ from .vstream import (
 from .vcodec import (
     vcodec_to_ffmpeg_vcodec
 )
-from .np_dtypes import np_to_uint16, np_to_uint8
-from .p_print import purple
-from .path_utils import path_split
-from .p_print import red
+from .utils.np_dtypes import np_to_uint16, np_to_uint8
+from .utils.p_print import purple
+from .utils.path_utils import path_split
+from .utils.p_print import red
 from .tools import ffmpeg_exe
 from .torch_tensor import (
     np_to_torch_dtype,

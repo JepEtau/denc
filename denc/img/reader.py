@@ -7,14 +7,14 @@ import torch
 from torch import Tensor
 from torch.cuda import StreamContext
 
-from .dh_transfers import htod_transfer
-from .img_io import (
+from ..dh_transfers import htod_transfer
+from .io import (
     load_image,
     load_images,
     load_image_as_tensor,
 )
-from .p_print import *
-from .torch_tensor import (
+from ..utils.p_print import *
+from ..torch_tensor import (
     Idtype,
     IdtypeToTorch,
     img_to_tensor,

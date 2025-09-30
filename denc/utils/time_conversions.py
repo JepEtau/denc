@@ -10,11 +10,11 @@ from typing import TypeAlias
 FrameRate: TypeAlias = Fraction
 
 
-def frame_to_s(no: int, frame_rate: FrameRate) -> int:
+def frame_to_s(no: int, frame_rate: FrameRate) -> float:
     return float(no * frame_rate.denominator) / float(frame_rate.numerator)
 
 
-def frame_to_ms(no: int, frame_rate: FrameRate) -> int:
+def frame_to_ms(no: int, frame_rate: FrameRate) -> float:
     return 1000. * frame_to_s(no, frame_rate)
 
 
@@ -45,7 +45,7 @@ def sexagesimal_to_frame(hms: str, frame_rate: FrameRate) -> int:
     return ms_to_frame(ms, frame_rate)
 
 
-def s_to_sexagesimal(s: float) -> int:
+def s_to_sexagesimal(s: float) -> str:
     frac, s = math.modf(s)
     return f"{timedelta(seconds=int(s))}.{int(1000 * frac):03}"
 
@@ -65,16 +65,3 @@ def reformat_datetime(date_str: str) -> str | None:
             d_str = d_str.replace(c, '_')
         return d_str
     return d.strftime("%Y-%m-%d_%H-%M-%S")
-
-
-if __name__ == "__main__":
-    fps = 25
-    frame_no = 100
-    s = 3.5
-
-    sexagesimal = frame_to_sexagesimal(frame_no, fps)
-    print(f"frame to sexagesimal: {sexagesimal}")
-
-    sexagesimal = s_to_sexagesimal(s)
-    print(f"seconds to sexagesimal: {sexagesimal}")
-

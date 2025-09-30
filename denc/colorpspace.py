@@ -4,7 +4,7 @@ from enum import Enum
 from .vcodec import (
     VideoCodec
 )
-from .utils import clean_str
+from .utils.utils import clean_str
 
 
 class ColorSpace(Enum):

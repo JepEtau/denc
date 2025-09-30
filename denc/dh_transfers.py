@@ -2,7 +2,7 @@ import numpy as np
 import time
 import torch
 from torch import Tensor
-from .p_print import red
+from .utils.p_print import red
 
 
 def htod_transfer(

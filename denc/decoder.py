@@ -11,8 +11,8 @@ from typing import TYPE_CHECKING
 import warnings
 
 from .media_stream import MediaStream
-from .np_dtypes import np_to_float32
-from .p_print import *
+from .utils.np_dtypes import np_to_float32
+from .utils.p_print import *
 from .tools import ffmpeg_exe
 from .torch_tensor import (
     torch_dtype_to_np,

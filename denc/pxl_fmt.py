@@ -1,7 +1,7 @@
 from enum import Enum
 import re
 
-from .p_print import *
+from .utils.p_print import *
 
 class PixFmt(Enum):
     YUV420P = "yuv420p"
