@@ -1,9 +1,12 @@
 from cgitb import grey
+from cgitb import grey
 from enum import Enum
 import re
 import subprocess
+import subprocess
 
 from .utils.p_print import *
+from .utils.tools import ffmpeg_exe
 from .utils.tools import ffmpeg_exe
 
 class PixFmt(Enum):
@@ -13,6 +16,38 @@ class PixFmt(Enum):
     RGB48 = "rgb48"
 
 
+def list_pixel_formats() -> dict[str, dict[str, bool | int | str]]:
+    pixel_formats: dict[str, dict[str, bool | int | str]] = {}
+
+
+    ffmpeg_command = [ffmpeg_exe, "-hide_banner", "-pix_fmts"]
+    try:
+        process = subprocess.run(ffmpeg_command, stdout=subprocess.PIPE)
+        ffmpeg_pixl_fmts: str = process.stdout.decode('utf-8')
+    except:
+        raise ValueError(red(f"Failed to get supported pixel formats"))
+
+
+    _pixel_formats: list[str] | None = None
+    if (
+        _pixel_formats := re.findall(
+            re.compile(r"[IOHBP.]{5}\s+([a-z_\d]+)\s+([1234]{1})\s+(\d+)\s+([\d-]+)"),
+            ffmpeg_pixl_fmts
+        )
+    ):
+        for f in _pixel_formats:
+            k, nc, bpp, bit_depths = f
+            c_order: str = ''
+            if 'rgb' in k:
+                c_order = 'rgb'
+            elif 'gbr' in k:
+                c_order = 'gbr'
+            elif 'bgr' in k:
+                c_order = 'bgr'
+            elif 'yuv' in k:
+                c_order = 'yuv'
+            elif 'gray' in k:
+                c_order = 'gray'
 def list_pixel_formats() -> dict[str, dict[str, bool | int | str]]:
     pixel_formats: dict[str, dict[str, bool | int | str]] = {}
 
