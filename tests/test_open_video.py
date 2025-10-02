@@ -2,6 +2,7 @@ import multiprocessing
 import os
 from pprint import pprint
 import signal
+import sys
 import time
 
 import numpy as np
@@ -13,27 +14,37 @@ from denc import MediaStream
 
 
 def main():
-    in_video_fp: str = f"~/mco/cache/ep10/sim_lr/ep10_episode_213__j_sim_lr_original.mkv"
 
-    in_video_fp = absolute_path(in_video_fp)
-    print(lightcyan(f"Input video file:"), f"{in_video_fp}")
-    if not os.path.isfile(in_video_fp):
-        raise FileExistsError(f"Missing file.")
+    if sys.platform == 'win32':
+        in_video_dir: str = os.path.join(__file__, os.pardir, os.pardir, os.pardir, "benchmark")
+        in_video_filename: str = "smpte_h264_640x480_yuv420p_bt709_limited_50.mkv"
 
-    media: MediaStream = denc.open(in_video_fp)
+    elif sys.platform == 'linux':
+        in_video_dir: str = f"~/mco/cache/ep10/sim_lr"
+        in_video_filename: str = "ep10_episode_213__j_sim_lr_original.mkv"
 
+    in_video_dir = absolute_path(in_video_dir)
 
-    pprint(media.video)
-    # print(media.seek)
-    # media.video.set_pipe_format(dtype=np.uint8)    
-    # print(media.video.pipe_format)
+    in_videos: list[str] = sorted(
+        [
+            os.path.join(in_video_dir, f)
+            for f in os.listdir(in_video_dir)
+            if f.endswith(".mkv") or f.endswith(".mxf")
+        ]
+    )
 
-    # media.video.set_pipe_format(dtype=np.uint16)    
-    # print(media.video.pipe_format)
+    for f in in_videos:
+        in_video_fp = os.path.join(in_video_dir, f)
+        print(lightcyan(f"Input video file:"), f"{in_video_fp}")
+        if not os.path.isfile(in_video_fp):
+            raise FileExistsError(f"Missing file.")
 
-    # media.video.set_pipe_format(dtype=np.float32)    
-    print(media.video.pipe_format)
-
+        try:
+            media: MediaStream = denc.open(in_video_fp)
+            print(lightcyan(media.video.pipe_format))
+            pprint(media.video)
+        except:
+            pass
 
 if __name__ == "__main__":
     signal.signal(signal.SIGINT, signal.SIG_DFL)

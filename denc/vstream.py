@@ -146,12 +146,15 @@ class VideoStream:
     def set_pipe_format(self, dtype: torch.dtype | np.dtype) -> None:
         """Video pipe
         """
+        if not isinstance(self, OutVideoStream):
+            return
         torch_dtype: torch.dtype = np_to_torch_dtype(dtype)
         self._pipe_format.dtype = torch_dtype
         self._pipe_format.pix_fmt = 'rgb24' if torch_dtype == torch.uint8 else 'rgb48'
         self._pipe_format.shape = self._calculate_pipe_shape()
         self._pipe_format.nbytes = (
-            math.prod(self._pipe_format.shape) * torch.tensor([], dtype=torch_dtype).element_size()
+            math.prod(self._pipe_format.shape)
+            * torch.tensor([], dtype=torch_dtype).element_size()
         )
 
 

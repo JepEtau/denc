@@ -20,15 +20,18 @@ from .vstream import FieldOrder, OutVideoStream
 
 
 
-def open(filepath: str, verbose: bool = False) -> MediaStream:
+def open(filepath: str, verbose: bool = False) -> MediaStream | None:
     in_video_fp: str = absolute_path(filepath)
     if verbose:
         print(lightcyan(f"Input video file:"), f"{in_video_fp}")
     if not os.path.isfile(in_video_fp):
         raise ValueError(red(f"Error: missing input file {in_video_fp}"))
 
-    media_info = probe_media_file(in_video_fp)
-    duration_s = float(media_info['format']['duration'])
+    try:
+        media_info = probe_media_file(in_video_fp)
+        duration_s = float(media_info['format']['duration'])
+    except:
+        raise ValueError(f"Failed to open {in_video_fp}")
 
     # Use the first video track
     v_stream: dict[str, str] = [
