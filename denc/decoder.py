@@ -13,7 +13,7 @@ import warnings
 from .media_stream import MediaStream
 from .utils.np_dtypes import np_to_float32
 from .utils.p_print import *
-from .tools import ffmpeg_exe
+from .utils.tools import ffmpeg_exe
 from .torch_tensor import (
     torch_dtype_to_np,
     np_to_torch_dtype,

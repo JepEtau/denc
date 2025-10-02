@@ -9,6 +9,8 @@ import torch
 from typing import Any, Literal, Optional, TYPE_CHECKING
 from warnings import warn
 
+from .pxl_fmt import PIXEL_FORMATS
+
 from .utils.path_utils import path_split
 from .torch_tensor import np_to_torch_dtype
 from .utils.p_print import *
@@ -30,7 +32,8 @@ if TYPE_CHECKING:
     from .media_stream import MediaStream
 
 
-ChannelOrder = Literal['rgb', 'bgr']
+
+ChannelOrder = Literal['rgb', 'bgr', 'yuv']
 FShape = tuple[int, int, int]
 
 class FieldOrder(Enum):
@@ -110,7 +113,8 @@ class VideoStream:
 
 
     def __post_init__(self):
-        pipe_dtype = torch.uint16 if self.bpp > 8 else torch.uint8
+        pipe_bpp: int = PIXEL_FORMATS[self.pix_fmt]['pipe_bpp']
+        pipe_dtype = torch.uint16 if pipe_bpp > 24 else torch.uint8
         shape = self._calculate_pipe_shape()
         self._pipe_format = PipeFormat(
             dtype=pipe_dtype,

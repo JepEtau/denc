@@ -1,4 +1,3 @@
-from .media_stream import MediaStream
 from .vcodec import VideoCodec
 from .vstream import FFmpegPreset
 from .pxl_fmt import PixFmt
@@ -18,6 +17,8 @@ from .img.io import (
     write_image,
     write_images,
 )
+from .media_stream import MediaStream
+from .vstream import VideoStream, OutVideoStream
 
 __all__ = [
     "MediaStream",
@@ -38,4 +39,8 @@ __all__ = [
     "new",
     "decode_frames",
     "write",
+
+    "VideoStream",
+    "OutVideoStream",
+
 ]

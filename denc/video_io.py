@@ -1,9 +1,9 @@
 from __future__ import annotations
 from fractions import Fraction
 import os
+from typing import cast
 import numpy as np
 
-from .colorpspace import ColorRange
 from .media_stream import (
     AudioInfo,
     MediaStream,
@@ -13,7 +13,7 @@ from .media_stream import (
 )
 from .utils.p_print import *
 from .utils.path_utils import absolute_path
-from .pxl_fmt import PIXEL_FORMAT, PixFmt
+from .pxl_fmt import PIXEL_FORMATS, PixFmt
 from .utils.time_conversions import FrameRate
 from .vcodec import VideoCodec
 from .vstream import FieldOrder, OutVideoStream
@@ -51,7 +51,7 @@ def open(filepath: str, verbose: bool = False) -> MediaStream:
     is_supported: bool = False
     pix_fmt = v_stream.get('pix_fmt', None)
     try:
-        v = PIXEL_FORMAT[pix_fmt]
+        v = PIXEL_FORMATS[pix_fmt]
         is_supported = v['supported']
         shape = (v_stream['height'], v_stream['width'], v['c'])
     except:
@@ -94,8 +94,9 @@ def open(filepath: str, verbose: bool = False) -> MediaStream:
         frame_count=0,
     )
 
+    tags_to_discard: tuple[str, ...]
     if isinstance(video_info.metadata, dict):
-        tags_to_discard: tuple[str] = (
+        tags_to_discard = (
             'duration',
             'encoder',
             'creation_time',
@@ -113,7 +114,7 @@ def open(filepath: str, verbose: bool = False) -> MediaStream:
 
     # Tags for DNxHD / DNxHR are stored in format struct
     if video_info.codec == VideoCodec.DNXHR:
-        tags_to_discard: tuple[str] = (
+        tags_to_discard = (
             'application_platform',
             'company_name',
             'generation_uid',
@@ -147,12 +148,12 @@ def open(filepath: str, verbose: bool = False) -> MediaStream:
 
 
     c_order = v['c_order']
-    if c_order not in ['rgb', 'bgr', 'yuv']:
+    if c_order not in ('rgb', 'bgr', 'yuv'):
         raise ValueError(f"{v['c_order']} is not supported")
     video_info.c_order = c_order
 
 
-    video_info.bpp = v['bpp']
+    video_info.bpp = cast(int, v['bpp'])
     video_info.frame_count = int(
         (video_info.duration * video_info.frame_rate_r) + 0.5
     )
@@ -160,7 +161,7 @@ def open(filepath: str, verbose: bool = False) -> MediaStream:
     tags = v_stream.get('tags', None)
     if tags is not None:
         tag_frame_count = tags.get('NUMBER_OF_FRAMES', '')
-        if tag_frame_count is not None:
+        if tag_frame_count is not None and tag_frame_count:
             tag_frame_count: int = int(tag_frame_count)
             if video_info.frame_count != tag_frame_count:
                 video_info.frame_count = tag_frame_count

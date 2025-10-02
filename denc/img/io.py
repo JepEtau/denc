@@ -4,6 +4,7 @@ import multiprocessing
 import os
 from pathlib import Path
 from pprint import pprint
+from typing import Literal
 import cv2
 import numpy as np
 import torch
@@ -20,7 +21,7 @@ from ..torch_tensor import (
 from ..utils.path_utils import absolute_path, path_split
 
 
-CPU_COUNT: int = multiprocessing.cpu_count()
+CPU_COUNT: int = multiprocessing.cpu_count() - 1 
 
 
 def img_info(img: np.ndarray | torch.Tensor) -> str:
@@ -58,12 +59,10 @@ def load_image_fp32(filepath: Path | str) -> np.ndarray:
 def write_image(filepath: Path | str, img: np.ndarray) -> None:
     # Support uint8 only as these functions aare used for debugging purpose
     # no nedd to improve this
-    extension = os.path.splitext(filepath)[1]
+    out_dir, _, extension = path_split(filepath)
+    os.makedirs(out_dir, exist_ok=True)
     try:
-        _, img_buffer = cv2.imencode(
-            f".{extension}",
-            np_to_uint8(img)
-        )
+        _, img_buffer = cv2.imencode(f".{extension}",np_to_uint8(img))
         with open(filepath, "wb") as buffered_writer:
             buffered_writer.write(img_buffer)
     except Exception as e:
@@ -72,11 +71,13 @@ def write_image(filepath: Path | str, img: np.ndarray) -> None:
 
 def load_images(
     filepaths: list[Path | str],
+    dtype: np.dtype = Literal[np.uint8, np.float32],
     cpu_count: int = 4,
-    dtype: np.dtype = np.float32,
 ) -> list[np.ndarray]:
     imgs: list[np.ndarray] = []
     load_img_function = load_image_fp32 if dtype == np.float32 else load_image
+    if len(filepaths) == 1:
+        imgs = [load_img_function(filepaths[0])]
     with ThreadPoolExecutor(max_workers=min(CPU_COUNT, cpu_count)) as executor:
         for img in executor.map(load_img_function, filepaths):
             imgs.append(img)
@@ -89,10 +90,13 @@ def write_images(
     images: tuple[np.ndarray],
     cpu_count: int = 4,
 ) -> None:
-    out_dir: str = path_split(filepaths[0])[0]
-    os.makedirs(out_dir, exist_ok=True)
-    with ThreadPoolExecutor(max_workers=min(CPU_COUNT, cpu_count)) as executor:
-        executor.map(write_image, filepaths, images)
+    if len(filepaths) == 1 or len(images) == 1:
+        write_image(filepath=filepaths[0], img=images[0])
+    else:
+        with ThreadPoolExecutor(
+            max_workers=min(CPU_COUNT, cpu_count, len(filepaths), len(images))
+        ) as executor:
+            executor.map(write_image, filepaths, images)
 
 
 def get_image_list(directory: str | Path, extension: str = '.png') -> list[str]:

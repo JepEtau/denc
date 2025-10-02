@@ -5,7 +5,7 @@ import subprocess
 
 from .encoder import write
 from .seek import Seek
-from .tools import ffprobe_exe
+from .utils.tools import ffprobe_exe
 from .vstream import OutVideoStream, VideoStream
 
 

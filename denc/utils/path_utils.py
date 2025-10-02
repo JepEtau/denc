@@ -37,7 +37,7 @@ def get_extension(fp: str) -> str:
 def absolute_path(path: str | Path) -> str:
     if path is not None and path != "":
         return os.path.abspath(os.path.expanduser(str(path)))
-    return path
+    return str(path)
 
 
 def get_app_tempdir() -> str:

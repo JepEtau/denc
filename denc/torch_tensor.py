@@ -1,7 +1,9 @@
 import sys
+from tracemalloc import start
 import numpy as np
 import torch
 from torch import Tensor
+
 from typing import Any, Literal, TypeAlias, cast
 
 
@@ -75,12 +77,11 @@ IdtypeToTorch: dict[Idtype, torch.dtype] = {
 
 
 def to_nchw(t: Tensor) -> Tensor:
-    shape_size = len(t.shape)
-    if shape_size == 3:
+    if t.ndim == 3:
         # (H, W, C) -> (1, C, H, W)
         return t.permute(2, 0, 1).unsqueeze(0)
 
-    elif shape_size == 2:
+    elif t.ndim == 2:
         # (H, W) -> (1, 1, H, W)
         return t.unsqueeze(0).unsqueeze(0)
 
@@ -89,10 +90,14 @@ def to_nchw(t: Tensor) -> Tensor:
 
 
 def to_hwc(t: Tensor) -> Tensor:
-    if len(t.shape) == 4:
+    if t.ndim == 4:
         # (1, C, H, W) -> (H, W, C)
         return t.squeeze(0).permute(1, 2, 0)
 
+    elif t.ndim == 3:
+        # (C, H, W) -> (H, W, C)
+        return t.permute(1, 2, 0)
+    
     else:
         raise ValueError("Unsupported output tensor shape")
 
@@ -104,15 +109,7 @@ def flip_r_b_channels(t: Tensor) -> Tensor:
 
     elif t.shape[2] == 4:
         # (H, W, C) RGBA -> BGRA
-        return torch.cat(
-            (
-                t[:, :, 2],
-                t[:, :, 1],
-                t[:, :, 0],
-                t[:, :, 3]
-            ),
-            axis=2
-        )
+        return t[:, :, [2, 1, 0, 3]]
 
     return t
 
@@ -161,15 +158,13 @@ def tensor_to_img(
         d_img = flip_r_b_channels(d_img)
 
     tensor_dtype: torch.dtype = tensor.dtype
-    img_dtype: torch.dtype = (
-        img_dtype
-        if isinstance(img_dtype, torch.dtype)
-        else np_dtype_to_torch[img_dtype]
+    _img_dtype: torch.dtype = (
+        img_dtype if isinstance(img_dtype, torch.dtype) else np_to_torch_dtype(img_dtype)
     )
 
     multiplier: float = 1.
-    if tensor_dtype != img_dtype:
-        num = _torch_max_value[img_dtype]
+    if tensor_dtype != _img_dtype:
+        num = _torch_max_value[_img_dtype]
         denum = _torch_max_value[tensor_dtype]
         multiplier: float = num / denum
 
@@ -177,4 +172,4 @@ def tensor_to_img(
         d_img = d_img.to(dtype=torch.float32, copy=False)
         d_img = d_img * multiplier
 
-    return d_img.to(img_dtype).contiguous()
+    return d_img.to(_img_dtype).contiguous()

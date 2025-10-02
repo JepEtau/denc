@@ -2,20 +2,18 @@
 from __future__ import annotations
 from dataclasses import dataclass
 import re
-from typing import TYPE_CHECKING, Optional, cast
+from typing import TYPE_CHECKING, Optional
 
 from .utils.p_print import *
-
-
-if TYPE_CHECKING:
-    from .vstream import VideoStream
-
 from .utils.time_conversions import (
     FrameRate,
     frame_to_sexagesimal,
     sexagesimal_to_frame,
     frame_to_s
 )
+if TYPE_CHECKING:
+    from .vstream import VideoStream
+
 
 
 @dataclass
@@ -155,7 +153,7 @@ class Seek:
     start={self.start},
     count={self.count},
 )"""
-        return string # .replace("\n", "").replace("\r", "").replace(" ", "")
+        return string
 
 
 

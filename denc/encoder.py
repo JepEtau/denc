@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from collections.abc import Callable
 import numpy as np
 import os
@@ -9,11 +11,10 @@ from threading import Thread
 import torch
 from torch import Tensor
 from torch.cuda import StreamContext
-from typing import IO
+from typing import IO, TYPE_CHECKING
 
 from .dh_transfers import dtoh_transfer
-from .media_stream import MediaStream
-from .pxl_fmt import PIXEL_FORMAT
+from .pxl_fmt import PIXEL_FORMATS
 from .vstream import (
     FFmpegPreset,
     OutVideoStream,
@@ -28,12 +29,14 @@ from .utils.np_dtypes import np_to_uint16, np_to_uint8
 from .utils.p_print import purple
 from .utils.path_utils import path_split
 from .utils.p_print import red
-from .tools import ffmpeg_exe
+from .utils.tools import ffmpeg_exe
 from .torch_tensor import (
     np_to_torch_dtype,
     tensor_to_img,
 )
 
+if TYPE_CHECKING:
+    from .media_stream import MediaStream
 
 
 # @dataclass(slots=True)
@@ -205,7 +208,7 @@ def encoder_subprocess(
 ) -> subprocess.Popen | None:
 
     pipe: PipeFormat = vstream.pipe_format
-    pipe_bpp = PIXEL_FORMAT[vstream.pix_fmt.value]['pipe_bpp']
+    pipe_bpp = PIXEL_FORMATS[vstream.pix_fmt.value]['pipe_bpp']
     if pipe_bpp > 8:
         pipe.dtype = torch.uint16
     else:
