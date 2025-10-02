@@ -3,7 +3,6 @@ from fractions import Fraction
 import os
 import numpy as np
 
-from .colorpspace import ColorRange
 from .media_stream import (
     AudioInfo,
     MediaStream,
@@ -13,7 +12,7 @@ from .media_stream import (
 )
 from .utils.p_print import *
 from .utils.path_utils import absolute_path
-from .pxl_fmt import PIXEL_FORMAT, PixFmt
+from .pxl_fmt import PIXEL_FORMATS, PixFmt
 from .utils.time_conversions import FrameRate
 from .vcodec import VideoCodec
 from .vstream import FieldOrder, OutVideoStream
@@ -51,7 +50,7 @@ def open(filepath: str, verbose: bool = False) -> MediaStream:
     is_supported: bool = False
     pix_fmt = v_stream.get('pix_fmt', None)
     try:
-        v = PIXEL_FORMAT[pix_fmt]
+        v = PIXEL_FORMATS[pix_fmt]
         is_supported = v['supported']
         shape = (v_stream['height'], v_stream['width'], v['c'])
     except:
@@ -94,8 +93,9 @@ def open(filepath: str, verbose: bool = False) -> MediaStream:
         frame_count=0,
     )
 
+    tags_to_discard: tuple[str, ...]
     if isinstance(video_info.metadata, dict):
-        tags_to_discard: tuple[str] = (
+        tags_to_discard = (
             'duration',
             'encoder',
             'creation_time',
@@ -113,7 +113,7 @@ def open(filepath: str, verbose: bool = False) -> MediaStream:
 
     # Tags for DNxHD / DNxHR are stored in format struct
     if video_info.codec == VideoCodec.DNXHR:
-        tags_to_discard: tuple[str] = (
+        tags_to_discard = (
             'application_platform',
             'company_name',
             'generation_uid',

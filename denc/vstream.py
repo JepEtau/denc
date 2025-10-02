@@ -30,6 +30,7 @@ if TYPE_CHECKING:
     from .media_stream import MediaStream
 
 
+
 ChannelOrder = Literal['rgb', 'bgr']
 FShape = tuple[int, int, int]
 
