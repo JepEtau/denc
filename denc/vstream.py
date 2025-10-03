@@ -9,19 +9,15 @@ import torch
 from typing import Any, Literal, Optional, TYPE_CHECKING
 from warnings import warn
 
-from .pxl_fmt import PIXEL_FORMATS
-
-from .utils.path_utils import path_split
-from .torch_tensor import np_to_torch_dtype
-from .utils.p_print import *
-from .utils.time_conversions import FrameRate
-
-
 from .colorpspace import (
     ColorRange,
     ColorSpace,
 )
-
+from .pxl_fmt import PIXEL_FORMATS
+from .torch_tensor import np_to_torch_dtype
+from .utils.path_utils import path_split
+from .utils.p_print import *
+from .utils.time_conversions import FrameRate
 from .vcodec import (
     PixFmt,
     VideoCodec,
@@ -32,16 +28,15 @@ if TYPE_CHECKING:
     from .media_stream import MediaStream
 
 
-
-ChannelOrder = Literal['rgb', 'bgr', 'yuv']
 FShape = tuple[int, int, int]
 
+
 class FieldOrder(Enum):
-    PROGRESSIVE = 'progressive' # Progressive video
-    TOP_FIELD_FIRST = 'tt'      # Interlaced video, top field coded and displayed first
-    BOTTOM_FIELD_FIRST = 'bb'   # Interlaced video, bottom field coded and displayed first
-    TOP_FIELD_BOTTOM = 'tb'     # Interlaced video, top coded first, bottom displayed first
-    BOTTOM_FIELD_TOP = 'bt'     # Interlaced video, bottom coded first, top displayed first
+    PROGRESSIVE = 'progressive' # Progressive
+    TOP_FIELD_FIRST = 'tt'      # Interlaced, top field coded and displayed first
+    BOTTOM_FIELD_FIRST = 'bb'   # Interlaced, bottom field coded and displayed first
+    TOP_FIELD_BOTTOM = 'tb'     # Interlaced, top coded first, bottom displayed first
+    BOTTOM_FIELD_TOP = 'bt'     # Interlaced, bottom coded first, top displayed first
 
 
 
@@ -76,10 +71,6 @@ class VideoStream:
     codec: VideoCodec
 
     shape: FShape
-    dtype: np.dtype
-    bpp: int
-
-    c_order: ChannelOrder
 
     frame_rate_r: FrameRate
     frame_rate_avg: FrameRate
@@ -103,9 +94,6 @@ class VideoStream:
 
     metadata: Any = None
 
-    # temporarly: use a flag to indicate if input/output
-    is_input: bool = False
-
     resize: DecoderResize = field(default_factory=DecoderResize)
     device: Device = field(default_factory=Device)
 
@@ -113,12 +101,18 @@ class VideoStream:
 
 
     def __post_init__(self):
-        pipe_bpp: int = PIXEL_FORMATS[self.pix_fmt]['pipe_bpp']
-        pipe_dtype = torch.uint16 if pipe_bpp > 24 else torch.uint8
+        pipe_pixel_format: dict = PIXEL_FORMATS[self.pix_fmt]['pipe_pxl_fmt']
+        if pipe_pixel_format in ('rgb24', 'rgba24'):
+            pipe_dtype: torch.dtype = torch.uint8
+        elif pipe_pixel_format in ('rgb48', 'rgba48'):
+            pipe_dtype: torch.dtype = torch.uint16
+        else:
+            raise NotImplementedError(f"not supported: {pipe_pixel_format}")
+        
         shape = self._calculate_pipe_shape()
         self._pipe_format = PipeFormat(
             dtype=pipe_dtype,
-            pix_fmt='rgb24' if pipe_dtype == torch.uint8 else 'rgb48',
+            pix_fmt=pipe_pixel_format,
             shape=shape,
             nbytes=math.prod(shape) * torch.tensor([], dtype=pipe_dtype).element_size(),
             # device='cpu'

@@ -1,7 +1,9 @@
 from __future__ import annotations
 from fractions import Fraction
 import os
+from pprint import pprint
 from typing import cast
+from warnings import warn
 import numpy as np
 
 from .media_stream import (
@@ -31,6 +33,7 @@ def open(filepath: str, verbose: bool = False) -> MediaStream | None:
         media_info = probe_media_file(in_video_fp)
         duration_s = float(media_info['format']['duration'])
     except:
+        pprint(media_info)
         raise ValueError(f"Failed to open {in_video_fp}")
 
     # Use the first video track
@@ -62,13 +65,12 @@ def open(filepath: str, verbose: bool = False) -> MediaStream | None:
         raise
         pass
     if not is_supported:
-        raise ValueError(f"{pix_fmt} is not supported")
+        warn(yellow(f"{pix_fmt} is not supported"))
 
 
     field_order = FieldOrder._value2member_map_[v_stream.get('field_order', 'progressive')]
 
     video_info: VideoStream = VideoStream(
-        is_input=True,
         filepath=in_video_fp,
         shape=shape,
         sar=Fraction(v_stream.get('sample_aspect_ratio', '1:1').replace(':', '/')),
@@ -90,10 +92,6 @@ def open(filepath: str, verbose: bool = False) -> MediaStream | None:
 
         duration=duration_s,
         metadata=v_stream.get('tags', None),
-
-        dtype=np.uint8,
-        bpp=24,
-        c_order='rgb',
         frame_count=0,
     )
 
@@ -149,14 +147,6 @@ def open(filepath: str, verbose: bool = False) -> MediaStream | None:
         video_info.is_interlaced = bool(fo != FieldOrder.PROGRESSIVE.value)
     video_info.is_frame_rate_fixed = bool(video_info.frame_rate_r == video_info.frame_rate_avg)
 
-
-    c_order = v['c_order']
-    if c_order not in ('rgb', 'bgr', 'yuv'):
-        raise ValueError(f"{v['c_order']} is not supported")
-    video_info.c_order = c_order
-
-
-    video_info.bpp = cast(int, v['bpp'])
     video_info.frame_count = int(
         (video_info.duration * video_info.frame_rate_r) + 0.5
     )
