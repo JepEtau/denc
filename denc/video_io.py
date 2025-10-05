@@ -114,8 +114,8 @@ def open(filepath: str, verbose: bool = False) -> MediaStream | None:
 
         field_order=field_order,
 
-        frame_rate_r=Fraction(frame_rate_r),
-        frame_rate_avg=Fraction(frame_rate_avg),
+        frame_rate_r=Fraction(frame_rate_r), # pyright: ignore[reportCallIssue]
+        frame_rate_avg=Fraction(frame_rate_avg), # pyright: ignore[reportCallIssue]
 
         codec=v_stream['codec_name'],
         pix_fmt=pix_fmt,

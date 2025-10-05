@@ -10,6 +10,7 @@ from denc.utils.path_utils import absolute_path
 from denc import (
     MediaStream,
     PIXEL_FORMATS,
+    VideoCodec,
 )
 
 
@@ -26,6 +27,8 @@ def main():
             # if f.endswith(".mkv") or f.endswith(".mxf")
             # if "smpte" in f
             # if f.endswith(".mxf")
+            # if f.endswith(".mov")
+            # if "FFv1" in f
         ]
     )
 
@@ -52,7 +55,7 @@ def main():
             # pprint(media.video)
         except Exception as e:
             print(red(f"\n\t{e}"))
-            media: MediaStream = denc.open(in_video_fp)
+            # media: MediaStream = denc.open(in_video_fp)
             continue
         print()
 
@@ -89,19 +92,35 @@ def main():
                 print(red("Error: shape"), f"{media.video.shape}, must be {shape}")
 
             if media.video.color_space != color_space:
-                print(red("Error: color_space"), f"{media.video.color_space}, must be {color_space}")
+                if _codec == VideoCodec.FFV1.value.lower():
+                    if color_space == 'gbr':
+                        print(red("Error: color_space"), f"must be GBR for FFv1 codec")
+
+                else:
+                    if color_space == 'unknown' and media.video.color_space is not None:
+                        print(red("Error: unknown color_space, found"), f"{media.video.color_space}")
+                    else:
+                        print(red("Error: color_space"), f"{media.video.color_space}, must be {color_space}")
                 # pprint(media.video)
                 # sys.exit()
 
-            try:
-                if media.video.color_range.value != color_range:
+            # _color_range = media.video.color_range.value
+            if _codec == VideoCodec.PRORES.value.lower():
+                if media.video.color_range is not None:
                     print(red("Error: color_range"), f"{media.video.color_range}, must be {color_range}")
-                    sys.exit()
+                    pprint(media.video)
+            else:
+                try:
+                    if media.video.color_range.value != color_range:
+                        print(red("Error: color_range"), f"{media.video.color_range}, must be {color_range}")
+                        pprint(media.video)
+                        # sys.exit()
 
-            except Exception as e:
-                print(e)
-                pprint(media.video)
-                sys.exit()
+                except Exception as e:
+                    print(e)
+                    print(red("Error: color_range"), f"{media.video.color_range}, must be {color_range}")
+                    # pprint(media.video)
+                    # sys.exit()
 
         else:
             print(yellow("  can't verify using the filename"))
