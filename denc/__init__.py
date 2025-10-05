@@ -1,6 +1,6 @@
 from .vcodec import VideoCodec
 from .vstream import FFmpegPreset
-from .pxl_fmt import PixFmt
+from .pxl_fmt import PixFmt, PIXEL_FORMATS
 from .colorpspace import ColorRange, ColorSpace
 
 from .video_io import (
@@ -23,7 +23,10 @@ from .vstream import VideoStream, OutVideoStream
 __all__ = [
     "MediaStream",
     "VideoCodec",
+
     "PixFmt",
+    "PIXEL_FORMATS",
+
     "ColorRange",
     "ColorSpace",
     "FFmpegPreset",

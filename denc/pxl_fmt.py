@@ -11,8 +11,9 @@ class PixFmt(Enum):
     YUV420P = "yuv420p"
     YUV422P10 = "yuv422p10le"
     RGB24 = "rgb24"
-    RGB48 = "rgb48"
-
+    RGB48 = "rgb48le"
+    RGBA24 = "rgba24"
+    RGBA48 = "rgba48le"
 
 
 def list_pixel_formats() -> dict[str, dict[str, bool | int | str]]:
@@ -36,49 +37,33 @@ def list_pixel_formats() -> dict[str, dict[str, bool | int | str]]:
     ):
         for f in _pixel_formats:
             k, nc, bpp, bit_depths = f
-            c_order: str = ''
-            if 'rgb' in k:
-                c_order = 'rgb'
-            elif 'gbr' in k:
-                c_order = 'gbr'
-            elif 'bgr' in k:
-                c_order = 'bgr'
-            elif 'yuv' in k:
-                c_order = 'yuv'
-            elif 'gray' in k:
-                c_order = 'gray'
-
-            if (
-                False
-                # 'be' in k
-                or ('j' in k and 'yuvj' not in k)
-                or 'x' in k
-            ):
-                # not supported
-                c_order = ''
 
             _depths: list[int] = list(map(int, bit_depths.split('-')))
 
             nc = int(nc)
+            pix_fmt: PixFmt
             if nc > 3:
-                pix_fmt = 'rgba48' if max(_depths) > 8 else 'rgba24'
+                pix_fmt = PixFmt.RGBA48 if max(_depths) > 8 else PixFmt.RGBA24
             else:
                 # Note: also convert from gray to rgb
-                pix_fmt = 'rgb48' if max(_depths) > 8 else 'rgb24'
+                pix_fmt = PixFmt.RGB48 if max(_depths) > 8 else PixFmt.RGB24
 
-            supported: bool = True if nc in (1, 3) and c_order != '' else False
+            supported: bool = False
+            if nc in (1, 3):
+                supported: bool = True
+
             pixel_formats[k] = {
-                'c': nc,
+                'nc': nc,
                 'bpp': bpp,
                 'pipe_bpc': max(_depths),
                 'pipe_bpp': sum(_depths),
-                'pipe_pxl_fmt': pix_fmt, 
+                'pipe_pxl_fmt': pix_fmt,
                 'supported': supported,
             }
 
     else:
         raise ValueError(red("Failed extracting pixel format"))
-    
+
     return pixel_formats
 
 
@@ -89,6 +74,6 @@ PIXEL_FORMATS = list_pixel_formats()
 if False:
     for k, v in PIXEL_FORMATS.items():
         if v['supported']:
-            print(lightgreen(f"{k:<10}"), f"\tbpp={v['bpp']}, pipe_bpc={v['pipe_bpc']}, pipe_bpp={v['pipe_bpp']}")
+            print(lightgreen(f"{k:<10}"), f"\tbpp={v['bpp']}, pipe_bpc={v['pipe_bpc']}, pipe_bpp={v['pipe_bpp']}, pipe_pxl_fmt={v['pipe_pxl_fmt']}")
         else:
-            print(darkgrey(f"{k:<10}\tbpp={v['bpp']}, pipe_bpc={v['pipe_bpc']}, pipe_bpp={v['pipe_bpp']}"))
+            print(darkgrey(f"{k:<10}\tbpp={v['bpp']}, pipe_bpc={v['pipe_bpc']}, pipe_bpp={v['pipe_bpp']}, pipe_pxl_fmt={v['pipe_pxl_fmt']}"))

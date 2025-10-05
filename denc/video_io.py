@@ -1,24 +1,40 @@
 from __future__ import annotations
 from fractions import Fraction
+import json
 import os
 from pprint import pprint
-from typing import cast
+import subprocess
 from warnings import warn
-import numpy as np
+
+from .colorpspace import ColorRange
 
 from .media_stream import (
     AudioInfo,
     MediaStream,
     SubtitleInfo,
     VideoStream,
-    probe_media_file,
 )
-from .utils.p_print import *
-from .utils.path_utils import absolute_path
 from .pxl_fmt import PIXEL_FORMATS, PixFmt
+from .utils.p_print import *
+from .utils.path_utils import absolute_path, path_split
+from .utils.tools import ffprobe_exe
 from .utils.time_conversions import FrameRate
-from .vcodec import VideoCodec
+from .vcodec import VideoCodec, supported_video_exts, CODEC_PROFILE
 from .vstream import FieldOrder, OutVideoStream
+
+
+
+def probe_media_file(media_filepath: str):
+    ffprobe_command = [
+        ffprobe_exe,
+        "-v", "error",
+        '-show_format',
+        '-show_streams',
+        '-of','json',
+        media_filepath
+    ]
+    process = subprocess.run(ffprobe_command, stdout=subprocess.PIPE)
+    return json.loads(process.stdout.decode('utf-8'))
 
 
 
@@ -29,6 +45,10 @@ def open(filepath: str, verbose: bool = False) -> MediaStream | None:
     if not os.path.isfile(in_video_fp):
         raise ValueError(red(f"Error: missing input file {in_video_fp}"))
 
+    extension = path_split(in_video_fp)[-1]
+    if extension not in supported_video_exts:
+        raise ValueError(f"Not a supported video file (extension={extension})")
+
     try:
         media_info = probe_media_file(in_video_fp)
         duration_s = float(media_info['format']['duration'])
@@ -38,16 +58,22 @@ def open(filepath: str, verbose: bool = False) -> MediaStream | None:
 
     # Use the first video track
     v_stream: dict[str, str] = [
-        stream for stream in media_info['streams'] if stream['codec_type'] == 'video'
+        stream
+        for stream in media_info['streams']
+        if stream['codec_type'] == 'video'
     ][0]
     audio_info: AudioInfo = AudioInfo(
         nstreams=len([
-            stream for stream in media_info['streams'] if stream['codec_type'] == 'audio'
+            stream
+            for stream in media_info['streams']
+            if stream['codec_type'] == 'audio'
         ])
     )
     subs_info: SubtitleInfo = SubtitleInfo(
         nstreams=len([
-            stream for stream in media_info['streams'] if stream['codec_type'] == 'subtitle'
+            stream
+            for stream in media_info['streams']
+            if stream['codec_type'] == 'subtitle'
         ])
     )
 
@@ -59,7 +85,7 @@ def open(filepath: str, verbose: bool = False) -> MediaStream | None:
     try:
         v = PIXEL_FORMATS[pix_fmt]
         is_supported = v['supported']
-        shape = (v_stream['height'], v_stream['width'], v['c'])
+        shape = (v_stream['height'], v_stream['width'], v['nc'])
     except:
         print(pix_fmt)
         raise
@@ -70,6 +96,16 @@ def open(filepath: str, verbose: bool = False) -> MediaStream | None:
 
     field_order = FieldOrder._value2member_map_[v_stream.get('field_order', 'progressive')]
 
+    # Frame rate
+    frame_rate_r = v_stream.get('r_frame_rate', None)
+    frame_rate_avg = v_stream.get('avg_frame_rate', None)
+    if (
+        frame_rate_avg is None
+        or frame_rate_avg == "0/0"
+    ):
+        frame_rate_avg = frame_rate_r
+
+    # Create a VideoStream instance and work with this
     video_info: VideoStream = VideoStream(
         filepath=in_video_fp,
         shape=shape,
@@ -78,8 +114,8 @@ def open(filepath: str, verbose: bool = False) -> MediaStream | None:
 
         field_order=field_order,
 
-        frame_rate_r=Fraction(v_stream.get('r_frame_rate', '0')),
-        frame_rate_avg=Fraction(v_stream.get('avg_frame_rate', '0')),
+        frame_rate_r=Fraction(frame_rate_r),
+        frame_rate_avg=Fraction(frame_rate_avg),
 
         codec=v_stream['codec_name'],
         pix_fmt=pix_fmt,
@@ -88,12 +124,19 @@ def open(filepath: str, verbose: bool = False) -> MediaStream | None:
         color_matrix=v_stream.get('color_matrix', None),
         color_transfer=v_stream.get('color_transfer', None),
         color_primaries=v_stream.get('color_primaries', None),
-        color_range=v_stream.get('color_range', None),
+        # color_range=v_stream.get('color_range', None),
 
         duration=duration_s,
         metadata=v_stream.get('tags', None),
         frame_count=0,
     )
+
+    color_range = v_stream.get('color_range', None)
+    if color_range is not None:
+        if color_range in ('pc', 'full'):
+            video_info.color_range = ColorRange.FULL
+        elif color_range in ('tv', 'limited'):
+            video_info.color_range = ColorRange.LIMITED
 
     tags_to_discard: tuple[str, ...]
     if isinstance(video_info.metadata, dict):
@@ -112,6 +155,15 @@ def open(filepath: str, verbose: bool = False) -> MediaStream | None:
                     del video_info.metadata[tag_name]
                 except:
                     pass
+
+    # Detect if dnxhd or dnxhr
+    if video_info.codec == "dnxhd":
+        profile = v_stream.get('profile', "").lower()
+        if "dnxhr" in profile:
+            video_info.codec = "dnxhr"
+            for p in CODEC_PROFILE[VideoCodec.DNXHR].available:
+                if p in profile:
+                    video_info.profile = p.upper()
 
     # Tags for DNxHD / DNxHR are stored in format struct
     if video_info.codec == VideoCodec.DNXHR:
@@ -160,6 +212,7 @@ def open(filepath: str, verbose: bool = False) -> MediaStream | None:
                 video_info.frame_count = tag_frame_count
                 video_info.frame_rate_r = Fraction(tag_frame_count, video_info.duration)
                 video_info.frame_rate_avg = video_info.frame_rate_r
+                print(yellow("modified frame_rate_avg using video_info.frame_count"))
 
     return MediaStream(
         filepath=filepath,
@@ -175,9 +228,6 @@ def new(filepath: str, preset = None) -> MediaStream:
         filepath=filepath,
         codec=VideoCodec.H265,
         shape=(0, 0, 0),
-        dtype=np.uint16,
-        bpp=10,
-        c_order='rgb',
         frame_rate_r=FrameRate(25, 1),
         frame_rate_avg=FrameRate(25, 1),
         frame_count=0,

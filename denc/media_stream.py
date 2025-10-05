@@ -5,7 +5,6 @@ import subprocess
 
 from .encoder import write
 from .seek import Seek
-from .utils.tools import ffprobe_exe
 from .vstream import OutVideoStream, VideoStream
 
 
@@ -55,16 +54,4 @@ class MediaStream:
         return write(self, frames)
 
 
-
-def probe_media_file(media_filepath: str):
-    ffprobe_command = [
-        ffprobe_exe,
-        "-v", "error",
-        '-show_format',
-        '-show_streams',
-        '-of','json',
-        media_filepath
-    ]
-    process = subprocess.run(ffprobe_command, stdout=subprocess.PIPE)
-    return json.loads(process.stdout.decode('utf-8'))
 

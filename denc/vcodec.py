@@ -6,6 +6,21 @@ from typing import TypedDict
 from .pxl_fmt import PixFmt
 
 
+supported_video_exts: tuple[str, ...] = (
+    '.mp4',     # H.264, H.265, MPEG-4
+    '.mkv',     # H.264, H.265, VP9, FFV1
+    '.mov',     # ProRes, H.264, H.265 (QuickTime)
+    '.avi',     # DivX, Xvid, MJPEG
+    '.mxf',     # DNxHD, DNxHR, AVC-Intra
+    '.webm',    # VP8, VP9 (WebM container)
+    '.flv',     # H.264, Sorenson Spark
+    '.ts',      # H.264/H.265 (MPEG-TS streaming)
+    '.ogg',     # Theora (less common)
+    '.wmv',     # WMV codecs (Windows Media)
+    '.3gp',     # H.263/H.264 (mobile devices)
+)
+
+
 class PatternName(Enum):
     SMPTEHDBARS = "smptehdbars"
     YUVTESTSRC = "yuvtestsrc"
@@ -72,8 +87,6 @@ vcodec_to_extension: dict[VideoCodec, str] = {
 
 
 
-
-
 pixfmts: dict[VideoCodec, tuple[PixFmt]] = {
     VideoCodec.H264: (PixFmt.YUV420P,),
     VideoCodec.H265: (PixFmt.YUV420P, PixFmt.YUV422P10),
@@ -102,13 +115,13 @@ class FFv1Settings:
     g: int = 1
     threads: int = 8
 
-
-class CodecProfile(TypedDict):
-    available: list[str]
+@dataclass(slots=True)
+class CodecProfile:
+    available: tuple[str]
     default: str
 
 
-codec_profile: dict[VideoCodec, CodecProfile] = {
+CODEC_PROFILE: dict[VideoCodec, CodecProfile] = {
     VideoCodec.H264: CodecProfile(
         available=("baseline", "main", "high", "high10", "high422", "high444"),
         default=""

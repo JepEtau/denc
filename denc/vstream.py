@@ -22,7 +22,7 @@ from .vcodec import (
     PixFmt,
     VideoCodec,
     vcodec_to_extension,
-    codec_profile,
+    CODEC_PROFILE,
 )
 if TYPE_CHECKING:
     from .media_stream import MediaStream
@@ -43,7 +43,7 @@ class FieldOrder(Enum):
 @dataclass(slots=True)
 class PipeFormat:
     dtype: torch.dtype
-    pix_fmt: Literal['rgb24', 'rgb48']
+    pix_fmt: Literal['rgb24', 'rgb48le']
     shape: FShape
     nbytes: int
 
@@ -68,12 +68,22 @@ class DecoderResize:
 @dataclass
 class VideoStream:
     filepath: str
-    codec: VideoCodec
+    codec: VideoCodec | str
 
     shape: FShape
 
+    # Raw Frame Rate
+    #  how the muxer (container) or codec declares the frame timing,
+    #  not necessarily the actual playback rate.
+    #  may be inaccurate or higher than real frame rate,
+    #  especially in variable frame rate (VFR) videos.
     frame_rate_r: FrameRate
+
+    # Average Frame Rate
+    #  computed from the video's total frames and total duration
+    #  real playback: how many frames per second are actually shown
     frame_rate_avg: FrameRate
+
     frame_count: int
     duration: float
 
@@ -86,11 +96,14 @@ class VideoStream:
 
     is_interlaced: bool = False
     field_order: FieldOrder = FieldOrder.PROGRESSIVE
+
+    profile: Optional[str] = ""
+
     color_range: Optional[ColorRange] = None
     color_space: Optional[ColorSpace] = None
     color_matrix: Optional[ColorSpace] = None
     color_primaries: Optional[ColorSpace] = None
-    color_transfer: Optional[ColorRange] = None
+    color_transfer: Optional[ColorSpace] = None
 
     metadata: Any = None
 
@@ -102,13 +115,13 @@ class VideoStream:
 
     def __post_init__(self):
         pipe_pixel_format: dict = PIXEL_FORMATS[self.pix_fmt]['pipe_pxl_fmt']
-        if pipe_pixel_format in ('rgb24', 'rgba24'):
+        if pipe_pixel_format in (PixFmt.RGB24, PixFmt.RGBA24):
             pipe_dtype: torch.dtype = torch.uint8
-        elif pipe_pixel_format in ('rgb48', 'rgba48'):
+        elif pipe_pixel_format in (PixFmt.RGB48, PixFmt.RGBA48):
             pipe_dtype: torch.dtype = torch.uint16
         else:
             raise NotImplementedError(f"not supported: {pipe_pixel_format}")
-        
+
         shape = self._calculate_pipe_shape()
         self._pipe_format = PipeFormat(
             dtype=pipe_dtype,
@@ -144,7 +157,7 @@ class VideoStream:
             return
         torch_dtype: torch.dtype = np_to_torch_dtype(dtype)
         self._pipe_format.dtype = torch_dtype
-        self._pipe_format.pix_fmt = 'rgb24' if torch_dtype == torch.uint8 else 'rgb48'
+        self._pipe_format.pix_fmt = 'rgb24' if torch_dtype == torch.uint8 else 'rgb48le'
         self._pipe_format.shape = self._calculate_pipe_shape()
         self._pipe_format.nbytes = (
             math.prod(self._pipe_format.shape)
@@ -254,21 +267,21 @@ class OutVideoStream(VideoStream):
     @property
     def profile(self) -> str:
         if self._profile:
-            if self._profile in codec_profile[self._vcodec]['available']:
+            if self._profile in CODEC_PROFILE[self._vcodec]['available']:
                 return self._profile
             else:
-                warn(f"\'{self._profile}\' is not a valid profile for {self._vcodec}, available: {codec_profile[self._vcodec]['available']}")
+                warn(f"\'{self._profile}\' is not a valid profile for {self._vcodec}, available: {CODEC_PROFILE[self._vcodec]['available']}")
                 return ""
         else:
             if (
-                not self._profile and codec_profile[self._vcodec]['default']
+                not self._profile and CODEC_PROFILE[self._vcodec]['default']
             ):
-                return codec_profile[self._vcodec]['default']
+                return CODEC_PROFILE[self._vcodec]['default']
         return self._profile
 
 
     @profile.setter
     def profile(self, profile: str) -> None:
-        if not profile in codec_profile[self._vcodec]['available']:
-            warn(f"\'{self._profile}\' is not a valid profile for {self._vcodec}, available: {codec_profile[self._vcodec]['available']}")
+        if not profile in CODEC_PROFILE[self._vcodec]['available']:
+            warn(f"\'{self._profile}\' is not a valid profile for {self._vcodec}, available: {CODEC_PROFILE[self._vcodec]['available']}")
         self._profile = profile
