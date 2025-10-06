@@ -21,7 +21,7 @@ from ..torch_tensor import (
 from ..utils.path_utils import absolute_path, path_split
 
 
-CPU_COUNT: int = multiprocessing.cpu_count() - 1 
+CPU_COUNT: int = multiprocessing.cpu_count() - 1
 
 
 def img_info(img: np.ndarray | torch.Tensor) -> str:
@@ -74,6 +74,8 @@ def load_images(
     dtype: np.dtype = Literal[np.uint8, np.float32],
     cpu_count: int = 4,
 ) -> list[np.ndarray]:
+    """Load images as BGR numpy array
+    """
     imgs: list[np.ndarray] = []
     load_img_function = load_image_fp32 if dtype == np.float32 else load_image
     if len(filepaths) == 1:
@@ -90,6 +92,8 @@ def write_images(
     images: tuple[np.ndarray],
     cpu_count: int = 4,
 ) -> None:
+    """Write BGR images
+    """
     if len(filepaths) == 1 or len(images) == 1:
         write_image(filepath=filepaths[0], img=images[0])
     else:

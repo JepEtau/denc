@@ -19,6 +19,10 @@ from .img.io import (
 )
 from .media_stream import MediaStream
 from .vstream import VideoStream, OutVideoStream
+from .torch_tensor import (
+    img_to_tensor,
+    tensor_to_img,
+)
 
 __all__ = [
     "MediaStream",
@@ -46,4 +50,6 @@ __all__ = [
     "VideoStream",
     "OutVideoStream",
 
+    "img_to_tensor",
+    "tensor_to_img",
 ]

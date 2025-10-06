@@ -114,7 +114,7 @@ class VideoStream:
 
 
     def __post_init__(self):
-        pipe_pixel_format: dict = PIXEL_FORMATS[self.pix_fmt.value]['pipe_pxl_fmt']
+        pipe_pixel_format: PixFmt = PIXEL_FORMATS[self.pix_fmt.value]['pipe_pxl_fmt']
         if pipe_pixel_format in (PixFmt.RGB24, PixFmt.RGBA24):
             pipe_dtype: torch.dtype = torch.uint8
         elif pipe_pixel_format in (PixFmt.RGB48, PixFmt.RGBA48):
@@ -125,7 +125,7 @@ class VideoStream:
         shape = self._calculate_pipe_shape()
         self._pipe_format = PipeFormat(
             dtype=pipe_dtype,
-            pix_fmt=pipe_pixel_format,
+            pix_fmt=pipe_pixel_format.value,
             shape=shape,
             nbytes=math.prod(shape) * torch.tensor([], dtype=pipe_dtype).element_size(),
             # device='cpu'
@@ -150,7 +150,7 @@ class VideoStream:
         self._pipe_format.nbytes = (
             math.prod(self._pipe_format.shape)
             * torch.tensor([], dtype=self._pipe_format.dtype).element_size()
-        )        
+        )
         return self._pipe_format
 
 

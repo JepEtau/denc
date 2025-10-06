@@ -286,8 +286,11 @@ def encoder_subprocess(
         vstream.filepath, "-y"
     ]
 
-    os.makedirs(path_split(vstream.filepath)[0], exist_ok=True)
+    pprint(e_command)
     print(purple(f"[V] Encoder: "), " ".join(e_command))
+    parent_dir: str = path_split(vstream.filepath)[0]
+    if parent_dir:
+        os.makedirs(parent_dir, exist_ok=True)
 
     e_subprocess: subprocess.Popen | None = None
     try:
@@ -380,7 +383,9 @@ def write(
     media: MediaStream,
     frames: list[np.ndarray | Tensor],
 ) -> None:
-
+    """Create a video from a set of images
+    frames must be in rgb order
+    """
     # Use the first image
     img0 = frames[0]
 
