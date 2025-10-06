@@ -39,21 +39,62 @@ class VideoCodec(Enum):
     H265 = "h265"
     FFV1 = "FFv1"
     DNXHR = "DNxHR"
+    AV1 = "av1"
     VP9 = "VP9"
     PRORES = "ProRes"
+    H264_VULKAN = "h264_vulkan"
     H264_NVENC = "h264_nvenc"
+    H265_NVENC = "h265_nvenc"
     HEVC_NVENC = "hevc_nvenc"
+    AV1_NVENC = "av1_nvenc"
+    H264_VAAPI = "h264_vaapi"
+    H265_VAAPI = "h265_vaapi"
+    AV1_VAAPI = "av1_vaapi"
+    VP9_VAAPI = "vp9_vaapi"
 
 
 vcodec_to_ffmpeg_vcodec: dict[VideoCodec, str] = {
     VideoCodec.H264: "libx264",
-    VideoCodec.H264_NVENC: "h264_nvenc",
     VideoCodec.H265: "libx265",
     VideoCodec.H265: "libx265",
     VideoCodec.VP9: "libvpx-vp9",
     VideoCodec.FFV1: "ffv1",
     VideoCodec.DNXHR: "dnxhd",
     VideoCodec.PRORES: "prores_ks",
+    VideoCodec.AV1: "libsvtav1",
+    VideoCodec.H264_VULKAN: "h264_vulkan",
+    VideoCodec.AV1_NVENC: "av1_nvenc",
+    VideoCodec.H264_NVENC: "h264_nvenc",
+    VideoCodec.H265_NVENC: "h265_nvenc",
+    VideoCodec.H264_VAAPI: "h264_vaapi",
+    VideoCodec.H265_VAAPI: "h265_vaapi",
+    VideoCodec.AV1_VAAPI: "av1_vaapi",
+    VideoCodec.VP9_VAAPI: "vp9_vaapi",
+}
+
+
+CUDA_DEVICE_OPTS = "-hwaccel cuda -hwaccel_output_format cuda"
+VAAPI_DEVICE_OPTS = "-hwaccel vaapi -hwaccel_output_format vaapi -rc_mode CQP"
+VULKAN_DEVICE_OPTS = "-init_hw_device vulkan=vkdev:0 -filter_hw_device vkdev -filter:v format=nv12,hwupload"
+vcodec_opts: dict[VideoCodec, list[str]] = {
+    VideoCodec.H264_VULKAN: VULKAN_DEVICE_OPTS.split(" "),
+    **{
+        k: CUDA_DEVICE_OPTS.split()
+        for k in [
+            VideoCodec.H264_NVENC,
+            VideoCodec.H265_NVENC,
+            VideoCodec.AV1_NVENC
+        ]
+    },
+    **{
+        k: VAAPI_DEVICE_OPTS.split()
+        for k in [
+            VideoCodec.H264_VAAPI,
+            VideoCodec.H265_VAAPI,
+            VideoCodec.AV1_VAAPI,
+            VideoCodec.VP9_VAAPI
+        ]
+    },
 }
 
 
@@ -86,7 +127,6 @@ vcodec_to_extension: dict[VideoCodec, str] = {
 }
 
 
-
 pixfmts: dict[VideoCodec, tuple[PixFmt]] = {
     VideoCodec.H264: (PixFmt.YUV420P,),
     VideoCodec.H265: (PixFmt.YUV420P, PixFmt.YUV422P10),
@@ -95,6 +135,7 @@ pixfmts: dict[VideoCodec, tuple[PixFmt]] = {
     VideoCodec.VP9: (PixFmt.YUV420P, PixFmt.YUV422P10),
     VideoCodec.PRORES: (PixFmt.YUV422P10,),
 }
+
 
 supported_pixfmt: dict[VideoCodec, tuple[PixFmt]] = {
     VideoCodec.H264: (PixFmt.YUV420P,),
