@@ -158,7 +158,7 @@ class FFv1Settings:
 
 @dataclass(slots=True)
 class CodecProfile:
-    available: tuple[str]
+    available: tuple[str, ...]
     default: str
 
 

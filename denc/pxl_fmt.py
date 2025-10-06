@@ -71,7 +71,7 @@ PIXEL_FORMATS = list_pixel_formats()
 
 
 # Debug
-if False:
+if True:
     for k, v in PIXEL_FORMATS.items():
         if v['supported']:
             print(lightgreen(f"{k:<10}"), f"\tbpp={v['bpp']}, pipe_bpc={v['pipe_bpc']}, pipe_bpp={v['pipe_bpp']}, pipe_pxl_fmt={v['pipe_pxl_fmt']}")

@@ -13,8 +13,8 @@ from denc.utils.path_utils import absolute_path
 def main():
     cpu_count: int = int(3 * multiprocessing.cpu_count() / 4)
 
-    # a list of images, limit to 20 imes
-    in_img_dir: str = absolute_path(f"~/mco/imgs/ep10_226_lr_j")
+    # a list of images, limit to 20 images
+    in_img_dir: str = absolute_path(f"~/z-personnel/mco/imgs/ep10_226_lr_j")
     in_img_fp: list[str] = sorted(
         [os.path.join(in_img_dir, f) for f in os.listdir(in_img_dir) if f.endswith(".png")]
     )

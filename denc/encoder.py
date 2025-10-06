@@ -34,7 +34,9 @@ from .torch_tensor import (
     np_to_torch_dtype,
     tensor_to_img,
 )
-
+from .vcodec import (
+    PixFmt,
+)
 if TYPE_CHECKING:
     from .media_stream import MediaStream
 
@@ -208,13 +210,16 @@ def encoder_subprocess(
 ) -> subprocess.Popen | None:
 
     pipe: PipeFormat = vstream.pipe_format
-    pipe_bpp = PIXEL_FORMATS[vstream.pix_fmt.value]['pipe_bpp']
-    if pipe_bpp > 8:
-        pipe.dtype = torch.uint16
-    else:
-        pipe.dtype = torch.uint8
+    # pipe_pixel_format: dict = PIXEL_FORMATS[vstream.pix_fmt.value]['pipe_pxl_fmt']
+    # if pipe_pixel_format in (PixFmt.RGB24, PixFmt.RGBA24):
+    #     pipe.dtype = torch.uint8
+    # elif pipe_pixel_format in (PixFmt.RGB48, PixFmt.RGBA48):
+    #     pipe.dtype = torch.uint16
+    # else:
+    #     raise NotImplementedError(f"not supported: {pipe_pixel_format}")
 
     print(purple("Encoder:"))
+    print(f"  vstream.pix_fmt: {vstream.pix_fmt.value}")
     print(f"  shape: {pipe.shape}")
     print(f"  dtype: {pipe.dtype}")
     print(f"  pixfmt: {pipe.pix_fmt}")

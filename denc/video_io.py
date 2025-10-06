@@ -227,19 +227,20 @@ def new(filepath: str, preset = None) -> MediaStream:
     vstream = OutVideoStream(
         filepath=filepath,
         codec=VideoCodec.H265,
+        pix_fmt=PixFmt.YUV422P10,
         shape=(0, 0, 0),
         frame_rate_r=FrameRate(25, 1),
         frame_rate_avg=FrameRate(25, 1),
         frame_count=0,
         duration=0,
-        pix_fmt=PixFmt.YUV422P10,
     )
-    mi: MediaStream=MediaStream(
+
+    mstream: MediaStream=MediaStream(
         filepath=filepath,
         video=vstream,
         audio=AudioInfo(nstreams=0),
         subtitles=SubtitleInfo(nstreams=0),
     )
-    vstream.parent = mi
+    vstream.parent = mstream
 
-    return mi
+    return mstream

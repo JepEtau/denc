@@ -114,7 +114,7 @@ class VideoStream:
 
 
     def __post_init__(self):
-        pipe_pixel_format: dict = PIXEL_FORMATS[self.pix_fmt]['pipe_pxl_fmt']
+        pipe_pixel_format: dict = PIXEL_FORMATS[self.pix_fmt.value]['pipe_pxl_fmt']
         if pipe_pixel_format in (PixFmt.RGB24, PixFmt.RGBA24):
             pipe_dtype: torch.dtype = torch.uint8
         elif pipe_pixel_format in (PixFmt.RGB48, PixFmt.RGBA48):
@@ -130,7 +130,7 @@ class VideoStream:
             nbytes=math.prod(shape) * torch.tensor([], dtype=pipe_dtype).element_size(),
             # device='cpu'
         )
-        self._vcodec = self.codec
+        self._codec = self.codec
 
 
     def _calculate_pipe_shape(self) -> FShape:
@@ -147,6 +147,10 @@ class VideoStream:
 
     @property
     def pipe_format(self) -> PipeFormat:
+        self._pipe_format.nbytes = (
+            math.prod(self._pipe_format.shape)
+            * torch.tensor([], dtype=self._pipe_format.dtype).element_size()
+        )        
         return self._pipe_format
 
 
@@ -204,7 +208,7 @@ class OutVideoStream(VideoStream):
     def __post_init__(self):
         super().__post_init__()
         self._codec: VideoCodec = self.codec
-        self.set_pipe_format(dtype=self.dtype)
+        # self.set_pipe_format(dtype=self.dtype)
 
     @property
     def codec(self) -> VideoCodec:
@@ -267,21 +271,21 @@ class OutVideoStream(VideoStream):
     @property
     def profile(self) -> str:
         if self._profile:
-            if self._profile in CODEC_PROFILE[self._vcodec]['available']:
+            if self._profile in CODEC_PROFILE[self._codec].available:
                 return self._profile
             else:
-                warn(f"\'{self._profile}\' is not a valid profile for {self._vcodec}, available: {CODEC_PROFILE[self._vcodec]['available']}")
+                warn(f"\'{self._profile}\' is not a valid profile for {self._codec}, available: {CODEC_PROFILE[self._codec].available}")
                 return ""
         else:
             if (
-                not self._profile and CODEC_PROFILE[self._vcodec]['default']
+                not self._profile and CODEC_PROFILE[self._codec].default
             ):
-                return CODEC_PROFILE[self._vcodec]['default']
+                return CODEC_PROFILE[self._codec].default
         return self._profile
 
 
     @profile.setter
     def profile(self, profile: str) -> None:
-        if not profile in CODEC_PROFILE[self._vcodec]['available']:
-            warn(f"\'{self._profile}\' is not a valid profile for {self._vcodec}, available: {CODEC_PROFILE[self._vcodec]['available']}")
+        if not profile in CODEC_PROFILE[self._codec].available:
+            warn(f"\'{self._profile}\' is not a valid profile for {self._codec}, available: {CODEC_PROFILE[self._codec].available}")
         self._profile = profile
