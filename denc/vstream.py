@@ -179,6 +179,17 @@ class VideoStream:
         self.device = Device(name=device, dtype=dtype)
 
 
+    @property
+    def preset(self) -> FFmpegPreset:
+        ...
+
+    @preset.setter
+    def preset(self, preset: FFmpegPreset) -> None:
+        ...
+
+
+
+
 
 # presets
 class FFmpegPreset(Enum):
@@ -240,6 +251,33 @@ class OutVideoStream(VideoStream):
             self._extra_params = [x for x in params if x]
         else:
             raise TypeError(f"Wrong type: {type(params)}")
+
+
+    @property
+    def frame_rate(self) -> Fraction:
+        return self.frame_rate_avg
+
+
+    @frame_rate.setter
+    def frame_rate(self, value: FrameRate | int | float, variable: bool = False) -> None:
+        if variable:
+            raise NotImplementedError(f"Variable frame rate is not yet available")
+        if isinstance(value, Fraction):
+            self.frame_rate_avg = value
+
+        elif isinstance(value, int):
+            self.frame_rate_avg = Fraction(value, 1)
+
+        elif isinstance(value, float):
+            if value % 29.97 == 0:
+                self.frame_rate_avg = Fraction(int(value / 29.97) * 30000, 1001)
+            elif value % 23.976 == 0:
+                self.frame_rate_avg = Fraction(int(value / 23.976) * 24000, 1001)
+            else:
+                raise NotImplementedError(f"{value} is not a valid frame rate")
+
+        else:
+            raise ValueError(f"{type[value]} is not a valid type for frame_rate")
 
 
     @property

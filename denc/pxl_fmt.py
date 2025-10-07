@@ -4,16 +4,19 @@ import subprocess
 
 from .utils.p_print import *
 from .utils.tools import ffmpeg_exe
+from .utils.logger import denc_logger
 
 
 
 class PixFmt(Enum):
     YUV420P = "yuv420p"
     YUV422P10 = "yuv422p10le"
+    YUV444P10 = "yuv444p10le"
     RGB24 = "rgb24"
     RGB48 = "rgb48le"
     RGBA24 = "rgba24"
     RGBA48 = "rgba48le"
+
 
 
 def list_pixel_formats() -> dict[str, dict[str, bool | int | str]]:
@@ -71,9 +74,15 @@ PIXEL_FORMATS = list_pixel_formats()
 
 
 # Debug
-if True:
+if False:
     for k, v in PIXEL_FORMATS.items():
         if v['supported']:
-            print(lightgreen(f"{k:<10}"), f"\tbpp={v['bpp']}, pipe_bpc={v['pipe_bpc']}, pipe_bpp={v['pipe_bpp']}, pipe_pxl_fmt={v['pipe_pxl_fmt']}")
+            msg: str = (
+                f"{lightgreen(f"{k:<10}")}\tbpp={v['bpp']}, pipe_bpc={v['pipe_bpc']}, pipe_bpp={v['pipe_bpp']}, pipe_pxl_fmt={v['pipe_pxl_fmt']}"
+            )
         else:
-            print(darkgrey(f"{k:<10}\tbpp={v['bpp']}, pipe_bpc={v['pipe_bpc']}, pipe_bpp={v['pipe_bpp']}, pipe_pxl_fmt={v['pipe_pxl_fmt']}"))
+            msg: str = (
+                f"{darkgrey(f"{k:<10}")}\tbpp={v['bpp']}, pipe_bpc={v['pipe_bpc']}, pipe_bpp={v['pipe_bpp']}, pipe_pxl_fmt={v['pipe_pxl_fmt']}"
+            )
+        print(msg)
+

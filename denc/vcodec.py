@@ -83,6 +83,7 @@ vcodec_opts: dict[VideoCodec, list[str]] = {
         for k in [
             VideoCodec.H264_NVENC,
             VideoCodec.H265_NVENC,
+            VideoCodec.HEVC_NVENC,
             VideoCodec.AV1_NVENC
         ]
     },
@@ -120,29 +121,32 @@ vcodec_default_profile: dict[VideoCodec, str] = {
 vcodec_to_extension: dict[VideoCodec, str] = {
     VideoCodec.H264: ".mkv",
     VideoCodec.H265: ".mkv",
+    VideoCodec.H265: ".mkv",
+    VideoCodec.VP9: ".webm",
     VideoCodec.FFV1: ".mkv",
-    VideoCodec.VP9: ".mkv",
     VideoCodec.DNXHR: ".mxf",
     VideoCodec.PRORES: ".mov",
-}
-
-
-pixfmts: dict[VideoCodec, tuple[PixFmt]] = {
-    VideoCodec.H264: (PixFmt.YUV420P,),
-    VideoCodec.H265: (PixFmt.YUV420P, PixFmt.YUV422P10),
-    VideoCodec.FFV1: (PixFmt.RGB24, PixFmt.RGB48),
-    VideoCodec.DNXHR: (PixFmt.YUV422P10,),
-    VideoCodec.VP9: (PixFmt.YUV420P, PixFmt.YUV422P10),
-    VideoCodec.PRORES: (PixFmt.YUV422P10,),
+    VideoCodec.AV1: ".mp4",
+    VideoCodec.H264_VULKAN: ".mkv",
+    VideoCodec.AV1_NVENC: ".mp4",
+    VideoCodec.H264_NVENC: ".mkv",
+    VideoCodec.H265_NVENC: ".mkv",
+    VideoCodec.HEVC_NVENC: ".mkv",
+    VideoCodec.H264_VAAPI: ".mkv",
+    VideoCodec.H265_VAAPI: ".mkv",
+    VideoCodec.AV1_VAAPI: ".mp4",
+    VideoCodec.VP9_VAAPI: "vp9_vaapi",
 }
 
 
 supported_pixfmt: dict[VideoCodec, tuple[PixFmt]] = {
     VideoCodec.H264: (PixFmt.YUV420P,),
-    VideoCodec.H265: (PixFmt.YUV420P, PixFmt.YUV422P10),
+    VideoCodec.H265: (PixFmt.YUV420P, PixFmt.YUV422P10, PixFmt.YUV444P10),
     VideoCodec.FFV1: (PixFmt.YUV420P, PixFmt.YUV422P10, PixFmt.RGB24, PixFmt.RGB48),
-    VideoCodec.DNXHR: (PixFmt.YUV420P, PixFmt.YUV422P10),
-    VideoCodec.VP9: (PixFmt.YUV420P, PixFmt.YUV422P10),
+    VideoCodec.DNXHR: (PixFmt.YUV420P, PixFmt.YUV422P10, PixFmt.YUV444P10),
+    VideoCodec.PRORES: (PixFmt.YUV422P10, PixFmt.YUV444P10),
+    VideoCodec.VP9: (PixFmt.YUV420P, PixFmt.YUV422P10, PixFmt.YUV444P10),
+    VideoCodec.AV1: (PixFmt.YUV420P, PixFmt.YUV422P10, PixFmt.YUV444P10),
 }
 
 
@@ -170,9 +174,15 @@ CODEC_PROFILE: dict[VideoCodec, CodecProfile] = {
     VideoCodec.H265: CodecProfile(
         available=("main", "main10", "mainstillpicture"), default=""
     ),
+    VideoCodec.FFV1: CodecProfile(available=(), default=""),
+
     # mpeg2video    # "simple, main, high",
-    VideoCodec.VP9: CodecProfile(available=(), default=""), # "No standard profiles exposed (VP8/VP9 use levels instead)"
+    # "No standard profiles exposed (VP8/VP9 use levels instead)"
+    VideoCodec.VP9: CodecProfile(available=(), default=""),
     # libaom-av1    # "main, high, professional",
+    VideoCodec.AV1: CodecProfile(
+        available=("main", "high", "professional"), default="main"
+    ),
     VideoCodec.H264_NVENC: CodecProfile(
         available=("baseline", "main", "high", "high444"), default=""
     ),

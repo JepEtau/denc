@@ -16,9 +16,6 @@
         "**/resources": true
     },
     "files.insertFinalNewline": true,
-    "files.trimFinalNewlines": false,
-    "files.trimTrailingWhitespace": true,
-
     "[python]": {
         "editor.rulers": [
             90,
@@ -31,6 +28,7 @@
         "reportAssignmentType": "none",
         "reportArgumentType": "none",
         "reportOptionalMemberAccess": "none",
-        // "reportCallIssue": "none",
+        "reportCallIssue": "none",
+        "reportAttributeAccessIssue": "none",
     }
 }

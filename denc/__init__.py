@@ -1,4 +1,6 @@
-from .vcodec import VideoCodec
+from .utils.logger import denc_logger
+
+from .vcodec import VideoCodec, vcodec_to_extension
 from .vstream import FFmpegPreset
 from .pxl_fmt import PixFmt, PIXEL_FORMATS
 from .colorpspace import ColorRange, ColorSpace
@@ -49,7 +51,10 @@ __all__ = [
 
     "VideoStream",
     "OutVideoStream",
+    "vcodec_to_extension",
 
     "img_to_tensor",
     "tensor_to_img",
+
+    "denc_logger",
 ]

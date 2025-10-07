@@ -28,14 +28,12 @@ from .vcodec import (
 from .utils.np_dtypes import np_to_uint16, np_to_uint8
 from .utils.p_print import purple
 from .utils.path_utils import path_split
-from .utils.p_print import red
+from .utils.p_print import *
 from .utils.tools import ffmpeg_exe
+from .utils.logger import denc_logger
 from .torch_tensor import (
     np_to_torch_dtype,
     tensor_to_img,
-)
-from .vcodec import (
-    PixFmt,
 )
 if TYPE_CHECKING:
     from .media_stream import MediaStream
@@ -218,14 +216,16 @@ def encoder_subprocess(
     # else:
     #     raise NotImplementedError(f"not supported: {pipe_pixel_format}")
 
-    print(purple("Encoder:"))
-    print(f"  vstream.pix_fmt: {vstream.pix_fmt.value}")
-    print(f"  shape: {pipe.shape}")
-    print(f"  dtype: {pipe.dtype}")
-    print(f"  pixfmt: {pipe.pix_fmt}")
-    print(f"  nbytes: {pipe.nbytes}")
+    denc_logger.info(f"""{purple("Encoder pipe:")}
+          vstream.pix_fmt: {vstream.pix_fmt.value}
+          shape: {pipe.shape}
+          dtype: {pipe.dtype}
+          pixfmt: {pipe.pix_fmt}
+          nbytes: {pipe.nbytes}"""
+        .replace("    ", " ")
+    )
 
-    # Profile
+    # Profiles
     profile: list[str] = []
     profile_value = vstream.profile
     if profile_value:
@@ -235,11 +235,15 @@ def encoder_subprocess(
     preset_crf: list[str] = []
     if vstream.preset != FFmpegPreset.DEFAULT:
         preset_crf.extend(["-preset", vstream.preset.value])
-    if vstream.crf >= 0:
-        preset_crf.extend(["-crf", f"{vstream.crf}"])
+
+    if vstream.codec not in (
+        VideoCodec.DNXHR,
+    ):
+        if vstream.crf >= 0:
+            preset_crf.extend(["-crf", f"{vstream.crf}"])
 
     # extra params for codec
-    codec_params: list[str] = vstream.extra_params
+    codec_params: list[str] = vstream.extra_params.copy()
 
     # colorspace, color range
     colorspace: list[str] = []
@@ -255,7 +259,11 @@ def encoder_subprocess(
 
     if (
         "log-level" not in codec_params
-        and vstream.codec not in (VideoCodec.H264, )
+        and vstream.codec not in (
+            VideoCodec.H264,
+            VideoCodec.FFV1,
+            VideoCodec.DNXHR,
+        )
     ):
         codec_params.extend(["log-level=0"])
 
@@ -272,12 +280,16 @@ def encoder_subprocess(
         "-f", "rawvideo",
         '-pixel_format', pipe.pix_fmt,
         '-video_size', f"{w}x{h}",
-        "-r", str(vstream.frame_rate_r),
+        "-r", str(vstream.frame_rate),
 
         "-i", "pipe:0",
 
+        # "-filter:v", f"fps=fps={vstream.frame_rate}",
+        # "-vsync", "0",
         "-pix_fmt", vstream.pix_fmt.value,
         "-vcodec", vcodec_to_ffmpeg_vcodec[vstream.codec],
+        # "-video_track_timescale", "60000",
+        # "-time_base", "1/60000",
         *profile,
         *preset_crf,
         *codec_params,
@@ -286,8 +298,8 @@ def encoder_subprocess(
         vstream.filepath, "-y"
     ]
 
-    pprint(e_command)
-    print(purple(f"[V] Encoder: "), " ".join(e_command))
+
+    denc_logger.info(f"{purple("Encoder command:")} {' '.join(e_command)}")
     parent_dir: str = path_split(vstream.filepath)[0]
     if parent_dir:
         os.makedirs(parent_dir, exist_ok=True)
@@ -301,7 +313,7 @@ def encoder_subprocess(
             stderr=subprocess.STDOUT,
         )
     except Exception as e:
-        print(red(f"[E][W]Unexpected error: {type(e)}"))
+        denc_logger.error(red(f"Unexpected error: {type(e)}"))
         return None
 
     return e_subprocess
@@ -372,10 +384,9 @@ def _encode_cuda_tensors(
     stdout_bytes, _ = e_subprocess.communicate(timeout=30)
     if stdout_bytes is not None:
         stdout = stdout_bytes.decode('utf-8)')
-        # TODO: parse the output file
-        if stdout != '':
+        if stdout:
             print(f"stdout:")
-            pprint(stdout)
+            print(stdout)
 
 
 
@@ -449,7 +460,9 @@ def write(
     if stdout_bytes is not None:
         stdout = stdout_bytes.decode('utf-8)')
         # TODO: parse the output file
-        if stdout != '':
+        if stdout:
             print(f"stdout:")
             pprint(stdout)
+            if 'error' in stdout.lower():
+                raise
 

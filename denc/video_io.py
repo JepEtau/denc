@@ -223,7 +223,7 @@ def open(filepath: str, verbose: bool = False) -> MediaStream | None:
 
 
 
-def new(filepath: str, preset = None) -> MediaStream:
+def new(filepath: str = "", preset = None) -> MediaStream:
     vstream = OutVideoStream(
         filepath=filepath,
         codec=VideoCodec.H265,
