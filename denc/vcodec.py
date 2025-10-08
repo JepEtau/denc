@@ -42,34 +42,44 @@ class VideoCodec(Enum):
     AV1 = "av1"
     VP9 = "VP9"
     PRORES = "ProRes"
-    H264_VULKAN = "h264_vulkan"
+
+    # H264_VULKAN = "h264_vulkan"
+
     H264_NVENC = "h264_nvenc"
-    H265_NVENC = "h265_nvenc"
     HEVC_NVENC = "hevc_nvenc"
     AV1_NVENC = "av1_nvenc"
+
     H264_VAAPI = "h264_vaapi"
     H265_VAAPI = "h265_vaapi"
     AV1_VAAPI = "av1_vaapi"
     VP9_VAAPI = "vp9_vaapi"
 
+    H264_AMF = "h264_amf"
+    HEVC_AMF = "hevc_amf"
+
 
 vcodec_to_ffmpeg_vcodec: dict[VideoCodec, str] = {
     VideoCodec.H264: "libx264",
-    VideoCodec.H265: "libx265",
     VideoCodec.H265: "libx265",
     VideoCodec.VP9: "libvpx-vp9",
     VideoCodec.FFV1: "ffv1",
     VideoCodec.DNXHR: "dnxhd",
     VideoCodec.PRORES: "prores_ks",
     VideoCodec.AV1: "libsvtav1",
-    VideoCodec.H264_VULKAN: "h264_vulkan",
-    VideoCodec.AV1_NVENC: "av1_nvenc",
+
+    # VideoCodec.H264_VULKAN: "h264_vulkan",
+
     VideoCodec.H264_NVENC: "h264_nvenc",
-    VideoCodec.H265_NVENC: "h265_nvenc",
+    VideoCodec.HEVC_NVENC: "hevc_nvenc",
+    VideoCodec.AV1_NVENC: "av1_nvenc",
+
     VideoCodec.H264_VAAPI: "h264_vaapi",
     VideoCodec.H265_VAAPI: "h265_vaapi",
     VideoCodec.AV1_VAAPI: "av1_vaapi",
     VideoCodec.VP9_VAAPI: "vp9_vaapi",
+
+    VideoCodec.H264_AMF: "h264_amf",
+    VideoCodec.HEVC_AMF: "hevc_amf",
 }
 
 
@@ -77,12 +87,11 @@ CUDA_DEVICE_OPTS = "-hwaccel cuda -hwaccel_output_format cuda"
 VAAPI_DEVICE_OPTS = "-hwaccel vaapi -hwaccel_output_format vaapi -rc_mode CQP"
 VULKAN_DEVICE_OPTS = "-init_hw_device vulkan=vkdev:0 -filter_hw_device vkdev -filter:v format=nv12,hwupload"
 vcodec_opts: dict[VideoCodec, list[str]] = {
-    VideoCodec.H264_VULKAN: VULKAN_DEVICE_OPTS.split(" "),
+    # VideoCodec.H264_VULKAN: VULKAN_DEVICE_OPTS.split(" "),
     **{
         k: CUDA_DEVICE_OPTS.split()
         for k in [
             VideoCodec.H264_NVENC,
-            VideoCodec.H265_NVENC,
             VideoCodec.HEVC_NVENC,
             VideoCodec.AV1_NVENC
         ]
@@ -127,15 +136,20 @@ vcodec_to_extension: dict[VideoCodec, str] = {
     VideoCodec.DNXHR: ".mxf",
     VideoCodec.PRORES: ".mov",
     VideoCodec.AV1: ".mp4",
-    VideoCodec.H264_VULKAN: ".mkv",
-    VideoCodec.AV1_NVENC: ".mp4",
+
+    # VideoCodec.H264_VULKAN: ".mkv",
+
     VideoCodec.H264_NVENC: ".mkv",
-    VideoCodec.H265_NVENC: ".mkv",
     VideoCodec.HEVC_NVENC: ".mkv",
+    VideoCodec.AV1_NVENC: ".mp4",
+
     VideoCodec.H264_VAAPI: ".mkv",
     VideoCodec.H265_VAAPI: ".mkv",
     VideoCodec.AV1_VAAPI: ".mp4",
     VideoCodec.VP9_VAAPI: "vp9_vaapi",
+
+    VideoCodec.H264_AMF: ".mkv",
+    VideoCodec.HEVC_AMF: ".mkv",
 }
 
 
@@ -195,6 +209,10 @@ CODEC_PROFILE: dict[VideoCodec, CodecProfile] = {
         available=("proxy", "lt", "standard", "hq", "4444", "4444xq"),
         default=str(ProResProfile.Standard)
     ),
+
+    # VideoCodec.H264_VULKAN: CodecProfile(available=(), default=""),
+    VideoCodec.H264_VAAPI: CodecProfile(available=(), default=""),
+
 }
 
 

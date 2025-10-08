@@ -23,7 +23,8 @@ from .vstream import (
 )
 
 from .vcodec import (
-    vcodec_to_ffmpeg_vcodec
+    vcodec_to_ffmpeg_vcodec,
+    vcodec_opts,
 )
 from .utils.np_dtypes import np_to_uint16, np_to_uint8
 from .utils.p_print import purple
@@ -233,11 +234,22 @@ def encoder_subprocess(
 
     # Preset, CRF
     preset_crf: list[str] = []
-    if vstream.preset != FFmpegPreset.DEFAULT:
-        preset_crf.extend(["-preset", vstream.preset.value])
+    if vstream.codec not in (
+        VideoCodec.AV1,
+        VideoCodec.VP9,
+        VideoCodec.PRORES,
+        VideoCodec.H264_NVENC,
+        VideoCodec.H264_VAAPI,
+
+    ):
+        if vstream.preset != FFmpegPreset.DEFAULT:
+            preset_crf.extend(["-preset", vstream.preset.value])
 
     if vstream.codec not in (
         VideoCodec.DNXHR,
+        VideoCodec.PRORES,
+        VideoCodec.H264_NVENC,
+        VideoCodec.H264_VAAPI,
     ):
         if vstream.crf >= 0:
             preset_crf.extend(["-crf", f"{vstream.crf}"])
@@ -257,18 +269,10 @@ def encoder_subprocess(
         # full: tuple[str] = ("pc", "jpeg", "full")
         colorspace.extend([f"-{k}", "limited" if v.lower() in limited else "full"])
 
-    if (
-        "log-level" not in codec_params
-        and vstream.codec not in (
-            VideoCodec.H264,
-            VideoCodec.FFV1,
-            VideoCodec.DNXHR,
-        )
-    ):
-        codec_params.extend(["log-level=0"])
-
     if vstream.codec == VideoCodec.H265:
         codec_params.insert(0, "-x265-params")
+        codec_params.append("log-level=0")
+
 
     h, w = pipe.shape[:2]
     e_command: list[str] = [
@@ -284,6 +288,7 @@ def encoder_subprocess(
 
         "-i", "pipe:0",
 
+        *vcodec_opts.get(vstream.codec, []),
         # "-filter:v", f"fps=fps={vstream.frame_rate}",
         # "-vsync", "0",
         "-pix_fmt", vstream.pix_fmt.value,

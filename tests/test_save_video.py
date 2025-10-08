@@ -43,7 +43,7 @@ def generate_filename(media: MediaStream) -> str:
         f"{w}x{h}",
         frame_rate_str,
         vstream.pix_fmt.value,
-        vstream.color_space.value.replace("bt", "rec"),
+        vstream.color_space.value,
         f"crf{vstream.crf}",
         vstream.preset.value.lower(),
     ])) + vcodec_to_extension[vstream.codec]
@@ -131,14 +131,43 @@ def main():
     # codec
     if args.codec or all_tests:
         codecs: list[VideoCodec] = list([c for c in VideoCodec])
+
+        codecs = [
+            # VideoCodec.H264,
+            # VideoCodec.H265,
+            # VideoCodec.FFV1,
+            # VideoCodec.DNXHR,
+            # VideoCodec.AV1,
+            # VideoCodec.VP9,
+            # VideoCodec.PRORES,
+            # VideoCodec.H264_VULKAN,
+            # VideoCodec.H264_NVENC,
+            # VideoCodec.H265_NVENC,
+            # VideoCodec.HEVC_NVENC,
+            # VideoCodec.AV1_NVENC,
+            VideoCodec.H264_VAAPI,
+            VideoCodec.H265_VAAPI,
+            VideoCodec.AV1_VAAPI,
+            VideoCodec.VP9_VAAPI,
+        ]
+
         pprint(codecs)
         for codec in codecs:
             vstream.codec = codec
+            # if codec in (
+            #     VideoCodec.H264,
+            #     # VideoCodec.H264_VULKAN,
+            # ):
+            #     vstream.pix_fmt = PixFmt.YUV420P
+            # else:
+            #     vstream.pix_fmt = PixFmt.YUV422P10
+
+
             out_media.filepath = generate_filename(out_media)
             print(lightcyan(f"{codec.value} :"), out_media.filepath)
             denc.write(out_media, frames=out_frames)
         vstream.codec = default_settings['codec']
-
+        vstream.pix_fmt = default_settings['pix_fmt']
 
     # pixel Format
     if args.pix_fmt or all_tests:
