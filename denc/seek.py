@@ -1,10 +1,10 @@
 
 from __future__ import annotations
 from dataclasses import dataclass
+from hutils import red
 import re
 from typing import TYPE_CHECKING, Optional
 
-from .utils.p_print import *
 from .utils.time_conversions import (
     FrameRate,
     frame_to_sexagesimal,

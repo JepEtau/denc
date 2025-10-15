@@ -1,4 +1,5 @@
 from concurrent.futures import ThreadPoolExecutor
+from hutils import path_split, red
 import multiprocessing
 import os
 from queue import Queue
@@ -9,8 +10,6 @@ from torch import Tensor
 from torch.cuda import StreamContext
 
 from .io import write_image
-from ..utils.p_print import *
-from ..utils.path_utils import path_split
 from ..torch_tensor import tensor_to_img
 from ..dh_transfers import dtoh_transfer
 

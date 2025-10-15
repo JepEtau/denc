@@ -21,7 +21,7 @@ keywords = ["ffmpeg", "video", "audio", "media-processing"]
 dependencies = [
     "numpy>=2.2.6",
     "opencv-python>=4.12",
-    # FFmpeg is expected to be installed
+    "hutils @ git+https://github.com/JepEtau/hutils.git@main#egg=hutils",
 ]
 
 # [project.optional-dependencies]

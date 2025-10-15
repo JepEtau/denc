@@ -1,3 +1,4 @@
+from hutils import absolute_path
 import multiprocessing
 import os
 from pprint import pprint
@@ -6,7 +7,6 @@ import time
 
 import numpy as np
 import denc
-from denc.utils.path_utils import absolute_path
 
 
 

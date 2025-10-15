@@ -1,3 +1,9 @@
+from hutils import (
+    absolute_path,
+    lightcyan,
+    red,
+    yellow,
+)
 import os
 from pprint import pprint
 import re
@@ -5,8 +11,6 @@ import signal
 import sys
 
 import denc
-from denc.utils.p_print import *
-from denc.utils.path_utils import absolute_path
 from denc import (
     MediaStream,
     PIXEL_FORMATS,

@@ -1,4 +1,8 @@
 from argparse import ArgumentParser
+from hutils import (
+    absolute_path,
+    lightcyan
+)
 import logging
 import multiprocessing
 import os
@@ -12,8 +16,6 @@ from typing import Any
 import numpy as np
 
 import denc
-from denc.utils.p_print import *
-from denc.utils.path_utils import absolute_path
 from denc import (
     MediaStream,
     VideoCodec,

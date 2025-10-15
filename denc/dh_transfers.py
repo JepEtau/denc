@@ -1,8 +1,8 @@
+from hutils import red
 import numpy as np
 import time
 import torch
 from torch import Tensor
-from .utils.p_print import red
 
 
 def htod_transfer(

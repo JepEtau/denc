@@ -1,8 +1,8 @@
 from enum import Enum
+from hutils import red, lightgreen, darkgrey
 import re
 import subprocess
 
-from .utils.p_print import *
 from .utils.tools import ffmpeg_exe
 from .utils.logger import denc_logger
 

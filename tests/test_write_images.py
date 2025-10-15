@@ -1,3 +1,4 @@
+from hutils import absolute_path
 import multiprocessing
 import os
 from pprint import pprint
@@ -7,7 +8,6 @@ import time
 
 import numpy as np
 import denc
-from denc.utils.path_utils import absolute_path
 
 
 
@@ -30,8 +30,8 @@ def main():
     os.makedirs(out_img_dir, exist_ok=True)
     out_img_fp: list[str] = sorted(
         [os.path.join(out_img_dir, f) for f in os.listdir(in_img_dir) if f.endswith(".png")]
-    )    
-    
+    )
+
     # Multiprocessing
     start_time = time.time()
     denc.write_images(

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from collections.abc import Callable
+from hutils import purple
 import numpy as np
 import os
 from pprint import pprint
@@ -27,9 +28,6 @@ from .vcodec import (
     vcodec_opts,
 )
 from .utils.np_dtypes import np_to_uint16, np_to_uint8
-from .utils.p_print import purple
-from .utils.path_utils import path_split
-from .utils.p_print import *
 from .utils.tools import ffmpeg_exe
 from .utils.logger import denc_logger
 from .torch_tensor import (

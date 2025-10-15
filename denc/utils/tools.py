@@ -1,6 +1,5 @@
 import os
 import sys
-from .path_utils import absolute_path
 from stat import S_IEXEC
 
 # external_dir: str = absolute_path(

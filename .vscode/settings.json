@@ -1,14 +1,27 @@
 {
     "files.exclude": {
         "**/__pycache__": true,
-        "**/*.engine": true,
-        "**/*.exe": true,
-        "**/*.mkv": true,
-        "**/*.mov": true,
-        "**/*.mp4": true,
-        "**/*.mxf": true,
+        "**/dist": true,
+        "**/*.egg-info": true,
+
+        "**/*.pt": true,
+        "**/*.pth": true,
+        "**/*.safetensors": true,
         "**/*.onnx": true,
+        "**/*.engine": true,
+        "**/*.ncnn": true,
+        "**/*.bin": true,
+        "**/*.param": true,
+
         "**/*.png": true,
+        "**/*.jpg": true,
+        "**/*.mkv": true,
+        "**/*.mp4": true,
+        "**/*.mov": true,
+        "**/*.mxf": true,
+
+        "**/*.exe": true,
+
         "**/*.so": true,
         "**/*.ui": false,
         "**/~$$*": true,
@@ -22,7 +35,9 @@
             120
         ]
     },
-
+    "python.analysis.extraPaths": [
+        "../hutils",
+    ],
     "python.analysis.typeCheckingMode": "basic",
     "python.analysis.diagnosticSeverityOverrides": {
         "reportAssignmentType": "none",

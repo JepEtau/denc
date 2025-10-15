@@ -1,4 +1,5 @@
 from concurrent.futures import ThreadPoolExecutor
+from hutils import red
 import multiprocessing
 from queue import Queue
 from threading import Thread
@@ -13,7 +14,6 @@ from .io import (
     load_images,
     load_image_as_tensor,
 )
-from ..utils.p_print import *
 from ..torch_tensor import (
     Idtype,
     IdtypeToTorch,
